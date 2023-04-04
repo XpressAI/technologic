@@ -7,7 +7,7 @@ Tree Chat GPT is a web application that uses OpenAI's GPT-3.5 to generate forkin
 Clone the repository and navigate to the project directory:
 
 ```
-git clone https://github.com/XpressAI/tree-chat-gpt.git
+git clone https://github.com/XpressAI/tree_chat_gpt.git
 cd tree-chat-gpt
 ```
 
