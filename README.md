@@ -1,6 +1,6 @@
-# Tree Chat GPT
+# Technologic
 
-Tree Chat GPT is a web application that uses OpenAI's GPT-3.5 to generate forking conversations;
+Technologic is a web application that uses OpenAI's GPT-3.5 to generate forking conversations.
 
 ## Installation
 
