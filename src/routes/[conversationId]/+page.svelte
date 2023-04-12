@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Message } from '$lib/OpenAI.ts';
-	import { sendMessage } from '$lib/OpenAI';
+	import { sendMessageAndStream } from '$lib/OpenAI';
 
 	import { tick } from 'svelte';
 	import { page } from '$app/stores';
@@ -8,7 +8,7 @@
 
 	import { technologic } from '$lib/stores/allMessageStore';
 
-	let { currentMessages, currentConversation, addMessage, createConversation, forkConversation } =
+	let { currentMessages, currentConversation, addMessage, createConversation, forkConversation, updateMessage } =
 		technologic;
 
 	let inputText = '';
@@ -29,10 +29,19 @@
 			addMessage($currentConversation, message);
 			inputText = '';
 			waiting = true;
+            let addedMessage = null;
 			const history = $currentMessages.map((msg) => msg.message);
-			const response = await sendMessage(message, history);
-			waiting = false;
-			addMessage($currentConversation, response);
+            await sendMessageAndStream(message, history, (delta, _) => {
+                if (delta && addedMessage === null) {
+                    addedMessage = addMessage($currentConversation, {
+                        role: 'assistant',
+                        content: delta
+                    });
+                    waiting = false;
+                } else if (delta && addedMessage !== null) {
+                    updateMessage($currentConversation, addedMessage.id, delta);
+                }
+            });
 		}
 	}
 

@@ -112,7 +112,9 @@ export function technologicStore() {
 		});
 	}
 
-	function addMessage(conv: Conversation, message: Message) {
+	function addMessage(conv: Conversation, message: Message): MessageContainer | null {
+        let ret: MessageContainer | null = null;
+
 		baseStore.update((db: TechnologicDB): TechnologicDB => {
 			const id = db.messages.nextId.toString();
 			const nextId = db.messages.nextId + 1;
@@ -122,6 +124,7 @@ export function technologicStore() {
 				parentId: conv === undefined ? undefined : conv.lastMessage?.id,
 				message
 			};
+            ret = messageContainer;
 
 			const updatedConv: Conversation = {
 				...conv,
@@ -145,7 +148,46 @@ export function technologicStore() {
 				}
 			};
 		});
+        return ret;
 	}
+
+    function updateMessage(conv: Conversation, id: string, delta: string) {
+        baseStore.update((db: TechnologicDB): TechnologicDB => {
+            const message = db.messages.messages[id];
+            if (message === undefined) return db;
+
+            const newMessage = {
+                ...message,
+                message: {
+                    ...message.message,
+                    content: message.message.content + delta
+                }
+            };
+
+            const updatedConv: Conversation = {
+                ...conv,
+                lastMessage: newMessage
+            };
+
+            const newDb = {
+                conversations: {
+                    nextId: db.conversations.nextId,
+                    conversations: {
+                        ...db.conversations.conversations,
+                        [updatedConv.id]: updatedConv
+                    }
+                },
+                messages: {
+                    nextId: db.messages.nextId,
+                    messages: {
+                        ...db.messages.messages,
+                        [message.id]: newMessage
+                    }
+                }
+            };
+            return newDb;
+        });
+    }
 
 	function forkConversation(conv: Conversation, messageContainer: MessageContainer) {
 		baseStore.update((db: TechnologicDB): TechnologicDB => {
@@ -190,6 +232,7 @@ export function technologicStore() {
 		currentConversation,
 		currentMessages,
 		addMessage,
+        updateMessage,
 		createConversation,
 		forkConversation,
 		renameConversation,

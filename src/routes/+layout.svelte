@@ -56,7 +56,7 @@
 			<a href="/">
 				<div class="flex flex-col">
 					<span class="text-2xl font-bold">Technologic</span>
-					<span class="text-lg">Branching Chat GPT</span>
+					<span class="text-lg">Branching AI Chat</span>
 				</div>
 			</a>
 			<div class="flex-grow mt-2">
