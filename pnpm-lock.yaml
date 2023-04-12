@@ -2,20 +2,17 @@ lockfileVersion: 5.4
 
 specifiers:
   '@fontsource/quicksand': ^4.5.12
-  '@popperjs/core': ^2.11.7
   '@skeletonlabs/skeleton': ^1.1.0
   '@sveltejs/adapter-auto': ^2.0.0
   '@sveltejs/kit': ^1.5.0
+  '@tabler/icons-svelte': ^2.14.0
   '@tailwindcss/typography': ^0.5.9
   '@typescript-eslint/eslint-plugin': ^5.45.0
   '@typescript-eslint/parser': ^5.45.0
   autoprefixer: ^10.4.7
-  classnames: ^2.3.2
   eslint: ^8.28.0
   eslint-config-prettier: ^8.5.0
   eslint-plugin-svelte3: ^4.0.0
-  flowbite: ^1.6.4
-  flowbite-svelte: ^0.34.4
   highlight.js: ^11.7.0
   postcss: ^8.4.14
   postcss-load-config: ^4.0.1
@@ -33,10 +30,7 @@ specifiers:
   vite: ^4.2.0
 
 dependencies:
-  '@popperjs/core': 2.11.7
-  classnames: 2.3.2
-  flowbite: 1.6.4
-  flowbite-svelte: 0.34.4_oaktdpvhczali64vppydij2u5y
+  '@tabler/icons-svelte': 2.14.0_svelte@3.58.0
 
 devDependencies:
   '@fontsource/quicksand': 4.5.12
@@ -368,10 +362,6 @@ packages:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: true
 
-  /@popperjs/core/2.11.7:
-    resolution: {integrity: sha512-Cr4OjIkipTtcXKjAsm8agyleBuDHvxzeBoa1v543lbv1YaIwQjESsVcmjiWiPEbC1FIeHOG/Op9kdCmAmiS3Kw==}
-    dev: false
-
   /@skeletonlabs/skeleton/1.1.0:
     resolution: {integrity: sha512-dkogVhYYQUzt1nXBMeal39suelaY7zejGPBc/5mjtfzvWjDF3KridZQwtSZrb81XlAFYGttHlcYCqSojywFGUQ==}
     dependencies:
@@ -433,6 +423,19 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@tabler/icons-svelte/2.14.0_svelte@3.58.0:
+    resolution: {integrity: sha512-dR58jWE5GbkevgT3wT8l7rl96GgJjs29+hzEHa3fbk271A1g0jrQQ0ztBgYujOYV4zNYf7eePTraTVF2zRZe7g==}
+    peerDependencies:
+      svelte: ^3.49.0
+    dependencies:
+      '@tabler/icons': 2.14.0
+      svelte: 3.58.0
+    dev: false
+
+  /@tabler/icons/2.14.0:
+    resolution: {integrity: sha512-q4qFe8P0M0cwRlQajPtjucjVrRPVkv/aFHWrCm+HZH9eOkjYSyyFtn7/Zz7lkjBcGiPUkh08d/d3IvJToP/zvw==}
+    dev: false
 
   /@tailwindcss/typography/0.5.9_tailwindcss@3.3.1:
     resolution: {integrity: sha512-t8Sg3DyynFysV9f4JDOVISGsjazNb48AeIYQwcL+Bsq5uf4RYL75C1giZ43KISjeDGBaTN3Kxh7Xj/vRSMJUUg==}
@@ -764,10 +767,6 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
-
-  /classnames/2.3.2:
-    resolution: {integrity: sha512-CSbhY4cFEJRe6/GQzIk5qXZ4Jeg5pcsP7b5peFSDpffpe1cqjASH/n9UTjBwOp6XpMSTwQ8Za2K5V02ueA7Tmw==}
-    dev: false
 
   /color-convert/2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -1103,28 +1102,6 @@ packages:
     resolution: {integrity: sha512-5nqDSxl8nn5BSNxyR3n4I6eDmbolI6WT+QqR547RwxQapgjQBmtktdP+HTBb/a/zLsbzERTONyUB5pefh5TtjQ==}
     dev: true
 
-  /flowbite-svelte/0.34.4_oaktdpvhczali64vppydij2u5y:
-    resolution: {integrity: sha512-bwKV1u6BKmtHC2fbrbQxOdkzLCAbiNTIrUchlx1p842SosEf9T77Yb/UtmP3ZecjmQZ+DUvnFazgvKjDhl9mvw==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-    peerDependencies:
-      '@popperjs/core': ^2.11.6
-      classnames: ^2.3.2
-      flowbite: ^1.6.3
-      svelte: ^3.55.1
-    dependencies:
-      '@popperjs/core': 2.11.7
-      classnames: 2.3.2
-      flowbite: 1.6.4
-      svelte: 3.58.0
-    dev: false
-
-  /flowbite/1.6.4:
-    resolution: {integrity: sha512-//kSaigwERCcE3udumadB3+xfOXeN/ZQzcub2qVCHuB7uscB4XIm3yP9R8zL0XsEOnYG2lnroq/dydQZbzvESw==}
-    dependencies:
-      '@popperjs/core': 2.11.7
-      mini-svg-data-uri: 1.4.4
-    dev: false
-
   /fraction.js/4.2.0:
     resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
     dev: true
@@ -1430,11 +1407,6 @@ packages:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
     dev: true
-
-  /mini-svg-data-uri/1.4.4:
-    resolution: {integrity: sha512-r9deDe9p5FJUPZAk3A59wGH7Ii9YrjjWw0jmw/liSbHl2CHiyXj6FcDXDu2K3TjVAXqiJdaw3xxwlZZr9E6nHg==}
-    hasBin: true
-    dev: false
 
   /minimatch/3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
