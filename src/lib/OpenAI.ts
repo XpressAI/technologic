@@ -1,10 +1,12 @@
+import {PUBLIC_MODEL} from '$env/static/public';
+
 export interface Message {
 	role: string;
 	content: string;
 }
 
 export async function sendMessage(message: Message, history: Message[]) {
-	const model = 'gpt-3.5-turbo';
+	const model = PUBLIC_MODEL;
 	const temperature = 0.7;
 
 	const payload = {

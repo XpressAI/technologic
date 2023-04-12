@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
 		server: {
 			proxy: {
 				'/v1': {
-					target: 'https://api.openai.com',
+					target: env.BACKEND,
 					changeOrigin: true,
 					headers: {
 						Authorization: `Bearer ${env.OPENAI_API_KEY}`
