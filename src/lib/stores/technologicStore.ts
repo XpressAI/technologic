@@ -1,7 +1,7 @@
 import { storage } from 'svelte-legos';
-import { derived, writable } from 'svelte/store';
+import {derived, get, writable} from 'svelte/store';
 import type { Readable } from 'svelte/store';
-import type { Message } from '../OpenAI';
+import type { Message } from '$lib/OpenAI';
 import { page } from '$app/stores';
 
 interface MessageContainer {

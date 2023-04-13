@@ -1,4 +1,4 @@
-import {PUBLIC_MODEL} from '$env/static/public';
+import { PUBLIC_MODEL } from '$env/static/public';
 
 export interface Message {
 	role: string;

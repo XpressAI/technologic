@@ -1,12 +1,14 @@
 <script lang="ts">
-	import type { Message } from '$lib/OpenAI.ts';
+	import type { Message } from '$lib/OpenAI';
 	import { sendMessage } from '$lib/OpenAI';
 
 	import { tick } from 'svelte';
 	import { page } from '$app/stores';
 	import MessageCard from '$lib/MessageCard.svelte';
 
-	import { technologic } from '$lib/stores/allMessageStore';
+	import { technologic } from '$lib/stores/technologicStore';
+
+	import IconDotsVertical from '@tabler/icons-svelte/dist/svelte/icons/IconDotsVertical.svelte';
 
 	let { currentMessages, currentConversation, addMessage, createConversation, forkConversation } =
 		technologic;
@@ -48,35 +50,29 @@
 	async function fork(msg) {
 		forkConversation($currentConversation, msg);
 	}
+	$: conversationTitle = $currentConversation?.title || 'New conversation';
 </script>
 
 <svelte:head>
-	<title>{$currentConversation?.title || 'New conversation'}</title>
+	<title>{conversationTitle}</title>
 </svelte:head>
 
 <div class="flex-col flex h-[100vh]">
+	<div class="p-5 pb-2 flex border-b">
+		<h3 class="flex-grow">{conversationTitle}</h3>
+		<div>
+			<button class="btn-icon variant-glass">
+				<span><IconDotsVertical /></span>
+			</button>
+		</div>
+	</div>
 	<div class="flex-grow chat relative">
-		<main class="absolute inset-0 overflow-y-scroll flex flex-col p-5">
+		<main class="absolute inset-0 overflow-y-scroll flex flex-col p-3">
 			{#each $currentMessages as msg}
 				<MessageCard msg={msg.message} on:fork={(e) => fork(msg)} />
 			{/each}
 			{#if waiting}
-				<section class="card m-2 variant-ghost animate-pulse">
-					<div class="p-4 space-y-4">
-						<div class="placeholder" />
-						<div class="grid grid-cols-3 gap-8">
-							<div class="placeholder" />
-							<div class="placeholder" />
-							<div class="placeholder" />
-						</div>
-						<div class="grid grid-cols-4 gap-4">
-							<div class="placeholder" />
-							<div class="placeholder" />
-							<div class="placeholder" />
-							<div class="placeholder" />
-						</div>
-					</div>
-				</section>
+				<MessageCard placeholder />
 			{/if}
 			<div bind:this={afterMessages} />
 		</main>
@@ -89,6 +85,7 @@
 				id="chat"
 				class="textarea p-2"
 				placeholder="Your message..."
+				on:keypress={(e) => {if(e.ctrlKey && e.code === 'Enter'){sendMessageToChat()}}}
 			/>
 			<button type="submit" class="btn-icon variant-filled-primary">
 				<span

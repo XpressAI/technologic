@@ -17,7 +17,7 @@
 	import { AppShell } from '@skeletonlabs/skeleton';
 
 	import { page } from '$app/stores';
-	import { technologic } from '$lib/stores/allMessageStore';
+	import { technologic } from '$lib/stores/technologicStore';
 	import type { Message } from '$lib/OpenAI';
 	import { sendMessage } from '$lib/OpenAI';
 
