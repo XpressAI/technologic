@@ -16,18 +16,18 @@
 
 	import { AppShell } from '@skeletonlabs/skeleton';
 
-	import { page } from '$app/stores';
-	import { technologic } from '$lib/stores/technologicStore';
+	import { folderStore } from "../lib/stores/folderStore";
+
+
 	import type { Message } from '$lib/OpenAI';
 	import { sendMessage } from '$lib/OpenAI';
+	import Folder from "../lib/Folder.svelte";
 
-	let { conversations, messages, renameConversation, getConversationMessages } = technologic;
-	$: console.log($conversations);
 
 	function rename(conv) {
 		const newTitle = prompt('What name do you want to use?', conv.title);
 		if (newTitle) {
-			renameConversation(conv, newTitle);
+			//renameConversation(conv, newTitle);
 		}
 	}
 
@@ -37,13 +37,13 @@
 			content: 'In at most 3 words, summarize the chat history excluding this message'
 		};
 
-		const history = getConversationMessages(conv, $messages).map((m) => m.message);
+		//const history = getConversationMessages(conv, $messages).map((m) => m.message);
 
 		const response = await sendMessage(message, history);
 
 		const newTitle = response.content;
 		if (newTitle) {
-			renameConversation(conv, newTitle);
+			//renameConversation(conv, newTitle);
 		}
 	}
 </script>
@@ -61,20 +61,9 @@
 			</a>
 			<div class="flex-grow mt-2">
 				<ul>
-					<li><a href="/{Object.values($conversations).length}">Start new Conversation</a></li>
+					<li><a href="/new">Start new Conversation</a></li>
 					<li><hr /></li>
-					{#each Object.values($conversations) as conv}
-						<li on:contextmenu|preventDefault={() => renameWithSummary(conv)}>
-							<p class="line-clamp-2">
-								<a
-									href="/{conv.id}"
-									class:bg-primary-active-token={$page.params.conversationId === conv.id}
-								>
-									{conv.title}
-								</a>
-							</p>
-						</li>
-					{/each}
+					<li><Folder folder={$folderStore} /></li>
 				</ul>
 			</div>
 			<div>

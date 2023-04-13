@@ -3,15 +3,12 @@
 	import { sendMessage } from '$lib/OpenAI';
 
 	import { tick } from 'svelte';
-	import { page } from '$app/stores';
 	import MessageCard from '$lib/MessageCard.svelte';
 
-	import { technologic } from '$lib/stores/technologicStore';
+	import { currentMessageThread, currentConversation, addMessage} from "../../lib/stores/conversationStore";
 
 	import IconDotsVertical from '@tabler/icons-svelte/dist/svelte/icons/IconDotsVertical.svelte';
 
-	let { currentMessages, currentConversation, addMessage, createConversation, forkConversation } =
-		technologic;
 
 	let inputText = '';
 	let afterMessages;
@@ -24,22 +21,19 @@
 				content: inputText
 			};
 
-			if (!$currentConversation) {
-				createConversation($page.params.conversationId);
-			}
+			addMessage(message, {backend: 'human', model: 'egg'});
 
-			addMessage($currentConversation, message);
 			inputText = '';
 			waiting = true;
-			const history = $currentMessages.map((msg) => msg.message);
+			const history = $currentMessageThread.messages.map((msg) => $currentConversation?.messages[msg.self].message);
 			const response = await sendMessage(message, history);
 			waiting = false;
-			addMessage($currentConversation, response);
+			addMessage(response, {backend: 'todo', model: 'even more todo'});
 		}
 	}
 
-	$: scrollToEnd($currentMessages);
-	async function scrollToEnd(_messages) {
+	$: scrollToEnd($currentMessageThread);
+	async function scrollToEnd(_) {
 		await tick();
 
 		if (afterMessages) {
@@ -48,7 +42,7 @@
 	}
 
 	async function fork(msg) {
-		forkConversation($currentConversation, msg);
+		//forkConversation($currentConversation, msg);
 	}
 	$: conversationTitle = $currentConversation?.title || 'New conversation';
 </script>
@@ -68,7 +62,8 @@
 	</div>
 	<div class="flex-grow chat relative">
 		<main class="absolute inset-0 overflow-y-scroll flex flex-col p-3">
-			{#each $currentMessages as msg}
+			{#each $currentMessageThread.messages as msgAlt}
+				{@const msg = $currentConversation?.messages[msgAlt.self] }
 				<MessageCard msg={msg.message} on:fork={(e) => fork(msg)} />
 			{/each}
 			{#if waiting}

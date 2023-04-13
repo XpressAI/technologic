@@ -6,7 +6,7 @@
 	import IconGitBranch from '@tabler/icons-svelte/dist/svelte/icons/IconGitBranch.svelte';
 	import Icon360 from '@tabler/icons-svelte/dist/svelte/icons/Icon360.svelte';
 
-	export let msg;
+	export let msg = null;
 	export let placeholder = false;
 
 	const dispatch = createEventDispatcher();
