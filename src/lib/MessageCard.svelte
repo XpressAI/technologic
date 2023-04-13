@@ -3,7 +3,8 @@
 	import SvelteMarkdown from 'svelte-markdown';
 	import { createEventDispatcher } from 'svelte';
 	import { CodeBlock } from '@skeletonlabs/skeleton';
-	import { IconGitBranch, Icon360 } from '@tabler/icons-svelte';
+	import IconGitBranch from '@tabler/icons-svelte/dist/svelte/icons/IconGitBranch.svelte';
+	import Icon360 from '@tabler/icons-svelte/dist/svelte/icons/Icon360.svelte';
 
 	export let msg;
 
