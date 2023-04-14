@@ -5,10 +5,13 @@
 	import { tick } from 'svelte';
 	import MessageCard from '$lib/MessageCard.svelte';
 
-	import { currentMessageThread, currentConversation, addMessage} from "../../lib/stores/conversationStore";
+	import {
+		currentMessageThread,
+		currentConversation,
+		addMessage
+	} from '$lib/stores/technologicStores';
 
 	import IconDotsVertical from '@tabler/icons-svelte/dist/svelte/icons/IconDotsVertical.svelte';
-
 
 	let inputText = '';
 	let afterMessages;
@@ -21,14 +24,16 @@
 				content: inputText
 			};
 
-			addMessage(message, {backend: 'human', model: 'egg'});
+			addMessage(message, { backend: 'human', model: 'egg' });
 
 			inputText = '';
 			waiting = true;
-			const history = $currentMessageThread.messages.map((msg) => $currentConversation?.messages[msg.self].message);
+			const history = $currentMessageThread.messages.map(
+				(msg) => $currentConversation?.messages[msg.self].message
+			);
 			const response = await sendMessage(message, history);
 			waiting = false;
-			addMessage(response, {backend: 'todo', model: 'even more todo'});
+			addMessage(response, { backend: 'todo', model: 'even more todo' });
 		}
 	}
 
@@ -63,8 +68,13 @@
 	<div class="flex-grow chat relative">
 		<main class="absolute inset-0 overflow-y-scroll flex flex-col p-3">
 			{#each $currentMessageThread.messages as msgAlt}
-				{@const msg = $currentConversation?.messages[msgAlt.self] }
-				<MessageCard msg={msg.message} on:fork={(e) => fork(msg)} />
+				{@const msg = $currentConversation?.messages[msgAlt.self]}
+				<MessageCard
+					msg={msg.message}
+					selfPosition={msgAlt.messageIds.indexOf(msgAlt.self) + 1}
+					alternativesCount={msgAlt.messageIds.length}
+					on:fork={(e) => fork(msg)}
+				/>
 			{/each}
 			{#if waiting}
 				<MessageCard placeholder />
@@ -80,7 +90,11 @@
 				id="chat"
 				class="textarea p-2"
 				placeholder="Your message..."
-				on:keypress={(e) => {if(e.ctrlKey && e.code === 'Enter'){sendMessageToChat()}}}
+				on:keypress={(e) => {
+					if (e.ctrlKey && e.code === 'Enter') {
+						sendMessageToChat();
+					}
+				}}
 			/>
 			<button type="submit" class="btn-icon variant-filled-primary">
 				<span

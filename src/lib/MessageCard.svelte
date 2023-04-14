@@ -5,8 +5,12 @@
 	import { CodeBlock } from '@skeletonlabs/skeleton';
 	import IconGitBranch from '@tabler/icons-svelte/dist/svelte/icons/IconGitBranch.svelte';
 	import Icon360 from '@tabler/icons-svelte/dist/svelte/icons/Icon360.svelte';
+	import IconChevronLeft from '@tabler/icons-svelte/dist/svelte/icons/IconChevronLeft.svelte';
+	import IconChevronRight from '@tabler/icons-svelte/dist/svelte/icons/IconChevronRight.svelte';
 
 	export let msg = null;
+	export let selfPosition = 0;
+	export let alternativesCount = 0;
 	export let placeholder = false;
 
 	const dispatch = createEventDispatcher();
@@ -48,7 +52,23 @@
 				<SvelteMarkdown source={msg.content} renderers={{ code: CodeRenderer }} />
 			{/if}
 		</p>
+		<hr />
 		<div class="flex items-center justify-between py-2">
+			{#if alternativesCount > 1}
+				<div>
+					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary">
+						<span>
+							<IconChevronLeft size="12" />
+						</span>
+					</button>
+					{selfPosition} / {alternativesCount}
+					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary">
+						<span>
+							<IconChevronRight size="12" />
+						</span>
+					</button>
+				</div>
+			{/if}
 			<div class="flex-grow" />
 			<div class="flex items-center gap-3">
 				<button

@@ -16,13 +16,10 @@
 
 	import { AppShell } from '@skeletonlabs/skeleton';
 
-	import { folderStore } from "../lib/stores/folderStore";
-
-
 	import type { Message } from '$lib/OpenAI';
 	import { sendMessage } from '$lib/OpenAI';
-	import Folder from "../lib/Folder.svelte";
-
+	import Folder from '$lib/Folder.svelte';
+	import { folderStore } from '$lib/stores/technologicStores';
 
 	function rename(conv) {
 		const newTitle = prompt('What name do you want to use?', conv.title);
