@@ -16,7 +16,7 @@
 	} from '$lib/stores/technologicStores';
 
 	import Menu from "$lib/Menu.svelte";
-	import {renameConversation} from "../../lib/stores/technologicStores";
+	import {renameConversation, deleteConversation, duplicateConversation} from "../../lib/stores/technologicStores";
 
 	let inputText = '';
 	let afterMessages;
@@ -80,6 +80,20 @@
 			renameConversation(newTitle);
 		}
 	}
+
+	async function deleteConv() {
+		const confirmed = confirm('Are you sure you want to delete this conversation?');
+		if (confirmed) {
+			deleteConversation();
+		}
+	}
+
+	async function duplicate() {
+		const confirmed = confirm('Are you sure you want to duplicate this conversation?');
+		if (confirmed) {
+			duplicateConversation();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -105,13 +119,13 @@
 						</a>
 					</li>
 					<li>
-						<a>
+						<a on:click={duplicate}>
 							<span><IconCopy /></span>
 							<span>Duplicate</span>
 						</a>
 					</li>
 					<li>
-						<a>
+						<a on:click={deleteConv}>
 							<span><IconTrashX /></span>
 							<span>Delete</span>
 						</a>

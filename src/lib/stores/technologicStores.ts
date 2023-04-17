@@ -181,6 +181,55 @@ export function createConversationStore(database: string, table: string) {
 		currentConversation.set(newConversation);
 	}
 
+	function findConversationFolder(start: Folder, conv: Conversation): Folder | null {
+		if (start.conversations.includes(conv.id)) {
+			return start;
+		}
+		for (const folder of start.folders) {
+			const result = findConversationFolder(folder, conv);
+			if (result !== null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	async function deleteConversation() {
+		const $currentConversation = get(currentConversation);
+		if ($currentConversation !== null) {
+			await db.removeItem($currentConversation.id);
+			rawFolderStore.update((root) => {
+				const folder = findConversationFolder(root, $currentConversation);
+				if(folder){
+					folder.conversations = folder.conversations.filter((it) => it !== $currentConversation.id);
+				}
+				return root;
+			});
+			await updateAllConversations();
+			currentConversation.set(null);
+		}
+	}
+
+	async function duplicateConversation() {
+		const $currentConversation = get(currentConversation);
+		if ($currentConversation !== null) {
+			const newConversation = {
+				...$currentConversation,
+				id: (await db.keys()).length.toString(),
+				title: $currentConversation.title + ' (copy)'
+			};
+			await db.setItem(newConversation.id, newConversation);
+			await updateAllConversations();
+			rawFolderStore.update((root) => {
+				const folder = findConversationFolder(root, $currentConversation);
+				if(folder){
+					folder.conversations = [...folder.conversations, newConversation.id];
+				}
+				return root;
+			});
+		}
+	}
+
 	if (browser) {
 		db = localforage.createInstance({
 			name: database,
@@ -207,7 +256,9 @@ export function createConversationStore(database: string, table: string) {
 		currentMessageThread,
 		allConversations,
 		addMessage,
-		renameConversation
+		renameConversation,
+		deleteConversation,
+		duplicateConversation
 	};
 }
 
@@ -215,7 +266,9 @@ const { currentConversation,
 	currentMessageThread,
 	allConversations,
 	addMessage,
-	renameConversation
+	renameConversation,
+	deleteConversation,
+	duplicateConversation
 } = createConversationStore('technologic', 'conversations');
 
 const folderStore = derived(
@@ -334,5 +387,7 @@ export {
 	moveItemToFolder,
 	removeFolder,
 	renameFolder,
-	renameConversation
+	renameConversation,
+	deleteConversation,
+	duplicateConversation
 };
