@@ -152,6 +152,35 @@ export function createConversationStore(database: string, table: string) {
 		currentConversation.set(newConversation);
 	}
 
+	async function renameConversation(title: string) {
+		const $currentConversation = get(currentConversation);
+		let newConversation: Conversation;
+		if ($currentConversation !== null) {
+			newConversation = {
+				...$currentConversation,
+				title: title
+			};
+			await db.setItem(newConversation.id, newConversation);
+		} else {
+			newConversation = {
+				id: (await db.keys()).length.toString(),
+				title: 'New Conversation',
+				messages: {},
+				graph: [],
+				lastMessageId: undefined
+			};
+			await db.setItem(newConversation.id, newConversation);
+			rawFolderStore.update((folder) => {
+				return {
+					...folder,
+					conversations: [...folder.conversations, newConversation.id]
+				};
+			});
+		}
+		await updateAllConversations();
+		currentConversation.set(newConversation);
+	}
+
 	if (browser) {
 		db = localforage.createInstance({
 			name: database,
@@ -177,12 +206,17 @@ export function createConversationStore(database: string, table: string) {
 		currentConversation,
 		currentMessageThread,
 		allConversations,
-		addMessage
+		addMessage,
+		renameConversation
 	};
 }
 
-const { currentConversation, currentMessageThread, allConversations, addMessage } =
-	createConversationStore('technologic', 'conversations');
+const { currentConversation,
+	currentMessageThread,
+	allConversations,
+	addMessage,
+	renameConversation
+} = createConversationStore('technologic', 'conversations');
 
 const folderStore = derived(
 	[rawFolderStore, allConversations],
@@ -239,7 +273,7 @@ function findFolder(start: Folder, path: string[]): Folder {
 
 function addFolder(parent: ResolvedFolder, name: string) {
 	rawFolderStore.update((folder) => {
-		console.log(parent)
+		console.log(parent);
 		const parentFolder = findFolder(folder, parent.path);
 		parentFolder.folders.push({
 			name: name,
@@ -252,7 +286,6 @@ function addFolder(parent: ResolvedFolder, name: string) {
 
 function moveItemToFolder(item: FolderContent, target: ResolvedFolder) {
 	rawFolderStore.update((root) => {
-
 		const targetFolder = findFolder(root, target.path);
 		const sourceFolder = findFolder(root, item.path);
 
@@ -260,13 +293,32 @@ function moveItemToFolder(item: FolderContent, target: ResolvedFolder) {
 			sourceFolder.conversations = sourceFolder.conversations.filter((it) => it !== item.id);
 			targetFolder.conversations = [...targetFolder.conversations, item.id];
 		} else {
-			const folder: Folder = findFolder(sourceFolder, [sourceFolder.name, (item.item as ResolvedFolder).name]);
+			const folder: Folder = findFolder(sourceFolder, [
+				sourceFolder.name,
+				(item.item as ResolvedFolder).name
+			]);
 			sourceFolder.folders = sourceFolder.folders.filter(
 				(it) => it.name !== (item.item as ResolvedFolder).name
 			);
 			targetFolder.folders = [...targetFolder.folders, folder];
 		}
 
+		return root;
+	});
+}
+
+function removeFolder(target: ResolvedFolder) {
+	rawFolderStore.update((root) => {
+		const sourceFolder = findFolder(root, target.path.slice(0, -1));
+		sourceFolder.folders = sourceFolder.folders.filter((it) => it.name !== target.name);
+		return root;
+	});
+}
+
+function renameFolder(target: ResolvedFolder, newName: string) {
+	rawFolderStore.update((root) => {
+		const sourceFolder = findFolder(root, target.path);
+		sourceFolder.name = newName;
 		return root;
 	});
 }
@@ -279,5 +331,8 @@ export {
 	configStore,
 	addMessage,
 	addFolder,
-	moveItemToFolder
+	moveItemToFolder,
+	removeFolder,
+	renameFolder,
+	renameConversation
 };

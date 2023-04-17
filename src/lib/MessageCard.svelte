@@ -45,7 +45,7 @@
 	</section>
 {:else}
 	<div class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'} ">
-		<p class="mb-3 font-normal text-gray-700 dark:text-gray-400 prose max-w-full">
+		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
 			{#if isSource}
 				<CodeBlock language="markdown" code={msg.content} />
 			{:else}

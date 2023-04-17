@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@floating-ui/dom': ^1.2.6
   '@fontsource/quicksand': ^4.5.12
   '@skeletonlabs/skeleton': ^1.1.0
   '@sveltejs/adapter-auto': ^2.0.0
@@ -35,6 +36,7 @@ dependencies:
   '@tabler/icons-svelte': 2.15.0_svelte@3.58.0
 
 devDependencies:
+  '@floating-ui/dom': 1.2.6
   '@fontsource/quicksand': 4.5.12
   '@skeletonlabs/skeleton': 1.1.0
   '@sveltejs/adapter-auto': 2.0.0_@sveltejs+kit@1.15.4
@@ -299,6 +301,16 @@ packages:
   /@eslint/js/8.38.0:
     resolution: {integrity: sha512-IoD2MfUnOV58ghIHCiil01PcohxjbYR/qCxsoC+xNgUwh1EY8jOOrYmu3d3a71+tJJ23uscEV4X2HJWMsPJu4g==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    dev: true
+
+  /@floating-ui/core/1.2.6:
+    resolution: {integrity: sha512-EvYTiXet5XqweYGClEmpu3BoxmsQ4hkj3QaYA6qEnigCWffTP3vNRwBReTdrwDwo7OoJ3wM8Uoe9Uk4n+d4hfg==}
+    dev: true
+
+  /@floating-ui/dom/1.2.6:
+    resolution: {integrity: sha512-02vxFDuvuVPs22iJICacezYJyf7zwwOCWkPNkWNBr1U0Qt1cKFYzWvxts0AmqcOQGwt/3KJWcWIgtbUU38keyw==}
+    dependencies:
+      '@floating-ui/core': 1.2.6
     dev: true
 
   /@fontsource/quicksand/4.5.12:

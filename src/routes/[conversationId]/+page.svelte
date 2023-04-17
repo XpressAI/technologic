@@ -4,6 +4,10 @@
 
 	import { tick } from 'svelte';
 	import MessageCard from '$lib/MessageCard.svelte';
+	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
+	import IconTopologyStarRing3 from '@tabler/icons-svelte/dist/svelte/icons/IconTopologyStarRing3.svelte';
+	import IconCopy from '@tabler/icons-svelte/dist/svelte/icons/IconCopy.svelte';
+	import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
 
 	import {
 		currentMessageThread,
@@ -11,7 +15,8 @@
 		addMessage
 	} from '$lib/stores/technologicStores';
 
-	import IconDotsVertical from '@tabler/icons-svelte/dist/svelte/icons/IconDotsVertical.svelte';
+	import Menu from "$lib/Menu.svelte";
+	import {renameConversation} from "../../lib/stores/technologicStores";
 
 	let inputText = '';
 	let afterMessages;
@@ -50,6 +55,31 @@
 		//forkConversation($currentConversation, msg);
 	}
 	$: conversationTitle = $currentConversation?.title || 'New conversation';
+
+	function rename() {
+		const newTitle = prompt('What name do you want to use?', conversationTitle);
+		if (newTitle) {
+			renameConversation(newTitle);
+		}
+	}
+
+	async function renameWithSummary() {
+		const message: Message = {
+			role: 'user',
+			content: 'In at most 3 words, summarize the chat history excluding this message'
+		};
+
+		const history = $currentMessageThread.messages.map(
+				(msg) => $currentConversation?.messages[msg.self].message
+		);
+
+		const response = await sendMessage(message, history);
+
+		const newTitle = response.content;
+		if (newTitle) {
+			renameConversation(newTitle);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -60,9 +90,34 @@
 	<div class="p-5 pb-2 flex border-b">
 		<h3 class="flex-grow">{conversationTitle}</h3>
 		<div>
-			<button class="btn-icon variant-glass">
-				<span><IconDotsVertical /></span>
-			</button>
+			<Menu id="conversation-menu">
+				<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
+					<li>
+						<a on:click={rename}>
+							<span><IconEdit /></span>
+							<span>Rename</span>
+						</a>
+					</li>
+					<li>
+						<a on:click={renameWithSummary}>
+							<span><IconTopologyStarRing3 /></span>
+							<span>Auto-Rename</span>
+						</a>
+					</li>
+					<li>
+						<a>
+							<span><IconCopy /></span>
+							<span>Duplicate</span>
+						</a>
+					</li>
+					<li>
+						<a>
+							<span><IconTrashX /></span>
+							<span>Delete</span>
+						</a>
+					</li>
+				</ul>
+			</Menu>
 		</div>
 	</div>
 	<div class="flex-grow chat relative">
@@ -84,11 +139,11 @@
 	</div>
 	<form on:submit|preventDefault={sendMessageToChat}>
 		<label for="chat" class="sr-only">Your message</label>
-		<div class="flex items-end card p-2 flex gap-2 rounded-none variant-glass">
+		<div class="flex card p-2 gap-2 rounded-none variant-glass items-center">
 			<textarea
 				bind:value={inputText}
 				id="chat"
-				class="textarea p-2"
+				class="textarea p-2 flex-grow"
 				placeholder="Your message..."
 				on:keypress={(e) => {
 					if (e.ctrlKey && e.code === 'Enter') {

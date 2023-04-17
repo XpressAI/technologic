@@ -5,6 +5,7 @@
 	// Your selected Skeleton theme:
 	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@fontsource/quicksand';
+	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
 
 	import '../app.postcss';
 
@@ -14,35 +15,15 @@
 
 	storeHighlightJs.set(hljs);
 
-	import { AppShell } from '@skeletonlabs/skeleton';
+	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
-	import type { Message } from '$lib/OpenAI';
-	import { sendMessage } from '$lib/OpenAI';
+	import { AppShell } from '@skeletonlabs/skeleton';
+	import { LightSwitch } from '@skeletonlabs/skeleton';
+	;
 	import Folder from '$lib/Folder.svelte';
 	import { folderStore } from '$lib/stores/technologicStores';
-
-	function rename(conv) {
-		const newTitle = prompt('What name do you want to use?', conv.title);
-		if (newTitle) {
-			//renameConversation(conv, newTitle);
-		}
-	}
-
-	async function renameWithSummary(conv) {
-		const message: Message = {
-			role: 'user',
-			content: 'In at most 3 words, summarize the chat history excluding this message'
-		};
-
-		//const history = getConversationMessages(conv, $messages).map((m) => m.message);
-
-		const response = await sendMessage(message, history);
-
-		const newTitle = response.content;
-		if (newTitle) {
-			//renameConversation(conv, newTitle);
-		}
-	}
 </script>
 
 <AppShell>
@@ -52,7 +33,7 @@
 		>
 			<a href="/">
 				<div class="flex flex-col">
-					<span class="text-2xl font-bold">Technologic</span>
+					<div class="flex gap-1 text-2xl font-bold items-center">Technologic <IconMessageChatbot /></div>
 					<span class="text-lg">Branching Chat GPT</span>
 				</div>
 			</a>
@@ -62,6 +43,11 @@
 					<li><hr /></li>
 					<li><Folder folder={$folderStore} /></li>
 				</ul>
+			</div>
+			<div class="flex place-content-center p-2">
+				<div>
+					<LightSwitch />
+				</div>
 			</div>
 			<div>
 				<a href="https://www.xpress.ai" class="card flex variant-ghost gap-2 place-content-center">
