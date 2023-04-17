@@ -16,11 +16,20 @@
 	} from '$lib/stores/technologicStores';
 
 	import Menu from "$lib/Menu.svelte";
-	import {renameConversation, deleteConversation, duplicateConversation} from "../../lib/stores/technologicStores";
+	import {
+		renameConversation,
+		deleteConversation,
+		duplicateConversation,
+		selectMessageThreadThrough
+	} from "../../lib/stores/technologicStores";
 
 	let inputText = '';
 	let afterMessages;
 	let waiting = false;
+
+	let forkMessageId = null;
+
+	$: conversationTitle = $currentConversation?.title || 'New conversation';
 
 	async function sendMessageToChat() {
 		if (inputText.trim().length > 0) {
@@ -29,7 +38,8 @@
 				content: inputText
 			};
 
-			addMessage(message, { backend: 'human', model: 'egg' });
+			addMessage(message, { backend: 'human', model: 'egg' }, forkMessageId);
+			forkMessageId = null;
 
 			inputText = '';
 			waiting = true;
@@ -51,10 +61,11 @@
 		}
 	}
 
+
 	async function fork(msg) {
-		//forkConversation($currentConversation, msg);
+		forkMessageId = msg.id;
 	}
-	$: conversationTitle = $currentConversation?.title || 'New conversation';
+
 
 	function rename() {
 		const newTitle = prompt('What name do you want to use?', conversationTitle);
@@ -92,6 +103,20 @@
 		const confirmed = confirm('Are you sure you want to duplicate this conversation?');
 		if (confirmed) {
 			duplicateConversation();
+		}
+	}
+
+	async function selectPrevThread(msg, msgAlt) {
+		const index = msgAlt.messageIds.indexOf(msg.id);
+		if (index > 0) {
+			await selectMessageThreadThrough(msgAlt.messageIds[index - 1]);
+		}
+	}
+
+	async function selectNextThread(msg, msgAlt) {
+		const index = msgAlt.messageIds.indexOf(msg.id);
+		if (index < msgAlt.messageIds.length - 1) {
+			await selectMessageThreadThrough(msgAlt.messageIds[index + 1]);
 		}
 	}
 </script>
@@ -142,7 +167,10 @@
 					msg={msg.message}
 					selfPosition={msgAlt.messageIds.indexOf(msgAlt.self) + 1}
 					alternativesCount={msgAlt.messageIds.length}
+					forkSelected={msg.id === forkMessageId}
 					on:fork={(e) => fork(msg)}
+					on:prevThread={(e) => selectPrevThread(msg, msgAlt)}
+					on:nextThread={(e) => selectNextThread(msg, msgAlt)}
 				/>
 			{/each}
 			{#if waiting}

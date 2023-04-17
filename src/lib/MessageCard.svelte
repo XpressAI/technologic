@@ -12,12 +12,13 @@
 	export let selfPosition = 0;
 	export let alternativesCount = 0;
 	export let placeholder = false;
+	export let forkSelected = false;
 
 	const dispatch = createEventDispatcher();
 
-	function fork(msg) {
-		dispatch('fork', msg);
-	}
+	const fork = () => { dispatch('fork', msg); };
+	const nextThread = () => { dispatch('nextThread', msg); };
+	const prevThread = () => { dispatch('prevThread', msg); };
 
 	let isSource = false;
 
@@ -44,7 +45,7 @@
 		</div>
 	</section>
 {:else}
-	<div class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'} ">
+	<div class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'}"  class:fork-selected={forkSelected}>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
 			{#if isSource}
 				<CodeBlock language="markdown" code={msg.content} />
@@ -56,13 +57,19 @@
 		<div class="flex items-center justify-between py-2">
 			{#if alternativesCount > 1}
 				<div>
-					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary">
+					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary"
+							on:click={prevThread}
+							disabled={selfPosition === 1}
+					>
 						<span>
 							<IconChevronLeft size="12" />
 						</span>
 					</button>
 					{selfPosition} / {alternativesCount}
-					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary">
+					<button class="p-[0.5rem] w-0.5 h-0.5 btn-icon btn-icon-sm variant-soft-tertiary"
+							on:click={nextThread}
+							disabled={selfPosition === alternativesCount}
+					>
 						<span>
 							<IconChevronRight size="12" />
 						</span>
@@ -75,7 +82,7 @@
 					type="button"
 					class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
 					title="Fork it!"
-					on:click={fork(msg)}
+					on:click={fork}
 				>
 					<span>
 						<IconGitBranch size="18" />
@@ -97,3 +104,9 @@
 		</div>
 	</div>
 {/if}
+
+<style lang="postcss">
+	.fork-selected {
+		@apply border border-rose-600;
+	}
+</style>

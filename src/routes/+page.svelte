@@ -1,6 +1,10 @@
+<script lang="ts">
+	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
+</script>
+
 <main class="card m-5">
 	<header class="card-header">
-		<h1>Technologic</h1>
+		<h1 class="flex gap-1">Technologic  <IconMessageChatbot size="48"/></h1>
 		<h2>Branching Chat GPT</h2>
 	</header>
 	<section class="p-4 gap-2 flex flex-col">
