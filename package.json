@@ -12,6 +12,7 @@
 		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"devDependencies": {
+		"@floating-ui/dom": "^1.2.6",
 		"@fontsource/quicksand": "^4.5.12",
 		"@skeletonlabs/skeleton": "^1.1.0",
 		"@sveltejs/adapter-auto": "^2.0.0",
@@ -24,6 +25,7 @@
 		"eslint-config-prettier": "^8.8.0",
 		"eslint-plugin-svelte3": "^4.0.0",
 		"highlight.js": "^11.7.0",
+		"localforage": "^1.10.0",
 		"postcss": "^8.4.21",
 		"postcss-load-config": "^4.0.1",
 		"prettier": "^2.8.7",
@@ -31,6 +33,7 @@
 		"process": "^0.11.10",
 		"svelte": "^3.58.0",
 		"svelte-check": "^3.2.0",
+		"svelte-dnd-action": "^0.9.22",
 		"svelte-legos": "^0.1.9",
 		"svelte-markdown": "^0.2.3",
 		"svelte-preprocess": "^4.10.7",

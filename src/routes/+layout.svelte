@@ -5,6 +5,8 @@
 	// Your selected Skeleton theme:
 	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@fontsource/quicksand';
+	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
+	import IconSettings from '@tabler/icons-svelte/dist/svelte/icons/IconSettings.svelte';
 
 	import '../app.postcss';
 
@@ -14,38 +16,16 @@
 
 	storeHighlightJs.set(hljs);
 
+	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+
 	import { AppShell } from '@skeletonlabs/skeleton';
-
-	import { page } from '$app/stores';
-	import { technologic } from '$lib/stores/technologicStore';
-	import type { Message } from '$lib/OpenAI';
-	import { sendMessage } from '$lib/OpenAI';
-
-	let { conversations, messages, renameConversation, getConversationMessages } = technologic;
-	$: console.log($conversations);
-
-	function rename(conv) {
-		const newTitle = prompt('What name do you want to use?', conv.title);
-		if (newTitle) {
-			renameConversation(conv, newTitle);
-		}
-	}
-
-	async function renameWithSummary(conv) {
-		const message: Message = {
-			role: 'user',
-			content: 'In at most 3 words, summarize the chat history excluding this message'
-		};
-
-		const history = getConversationMessages(conv, $messages).map((m) => m.message);
-
-		const response = await sendMessage(message, history);
-
-		const newTitle = response.content;
-		if (newTitle) {
-			renameConversation(conv, newTitle);
-		}
-	}
+	import { LightSwitch } from '@skeletonlabs/skeleton';
+	;
+	import Folder from '$lib/Folder.svelte';
+	import { folderStore } from '$lib/stores/technologicStores';
+	import Menu from "$lib/Menu.svelte";
 </script>
 
 <AppShell>
@@ -55,27 +35,28 @@
 		>
 			<a href="/">
 				<div class="flex flex-col">
-					<span class="text-2xl font-bold">Technologic</span>
+					<div class="flex gap-1 text-2xl font-bold items-center">Technologic <IconMessageChatbot /></div>
 					<span class="text-lg">Branching Chat GPT</span>
 				</div>
 			</a>
 			<div class="flex-grow mt-2">
 				<ul>
-					<li><a href="/{Object.values($conversations).length}">Start new Conversation</a></li>
+					<li><a href="/new">Start new Conversation</a></li>
 					<li><hr /></li>
-					{#each Object.values($conversations) as conv}
-						<li on:contextmenu|preventDefault={() => renameWithSummary(conv)}>
-							<p class="line-clamp-2">
-								<a
-									href="/{conv.id}"
-									class:bg-primary-active-token={$page.params.conversationId === conv.id}
-								>
-									{conv.title}
-								</a>
-							</p>
-						</li>
-					{/each}
+					<li><Folder folder={$folderStore} /></li>
 				</ul>
+			</div>
+			<div class="flex place-content-end p-2">
+				<Menu id="settings">
+					<div slot="button">
+						<IconSettings />
+					</div>
+					<ul class="list card p-2">
+						<li class="flex gap-2">
+							<LightSwitch /> Dark Mode
+						</li>
+					</ul>
+				</Menu>
 			</div>
 			<div>
 				<a href="https://www.xpress.ai" class="card flex variant-ghost gap-2 place-content-center">
