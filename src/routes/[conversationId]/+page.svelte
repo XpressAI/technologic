@@ -63,7 +63,9 @@
 		let responseMessage;
 		sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
-				responseMessage = await addMessage({role: 'assistant', content}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
+				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
+				forkMessageId = $currentConversation?.lastMessageId;
+				waiting = false;
 			}else{
 				responseMessage = await replaceMessage(responseMessage, {
 					...responseMessage.message,
@@ -71,9 +73,6 @@
 				}, responseMessage.source);
 			}
 		})
-
-		forkMessageId = $currentConversation?.lastMessageId;
-		waiting = false;
 	}
 
 	async function regenerate(msg){
@@ -88,6 +87,7 @@
 		sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
 				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, parent?.self);
+				waiting = false;
 			}else{
 				responseMessage = await replaceMessage(responseMessage, {
 					...responseMessage.message,
@@ -95,7 +95,6 @@
 				}, responseMessage.source);
 			}
 		})
-		waiting = false;
 	}
 
 	$: scrollToEnd($currentMessageThread);
