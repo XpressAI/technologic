@@ -124,7 +124,7 @@ export function createConversationStore(database: string, table: string) {
 				},
 				graph: [
 					...$currentConversation.graph,
-					{ from: parentMessageId ? parentMessageId : $currentConversation.lastMessageId, to: container.id }
+					{ from: parentMessageId, to: container.id }
 				],
 				lastMessageId: container.id
 			};
@@ -150,6 +150,24 @@ export function createConversationStore(database: string, table: string) {
 			});
 		}
 		currentConversation.set(newConversation);
+	}
+
+	async function replaceMessage(orig: MessageContainer, newMsg: Message) {
+		const $currentConversation = get(currentConversation);
+		if ($currentConversation !== null) {
+			const newConversation = {
+				...$currentConversation,
+				messages: {
+					...$currentConversation.messages,
+					[orig.id]: {
+						...orig,
+						message: newMsg
+					}
+				}
+			};
+			await db.setItem(newConversation.id, newConversation);
+			currentConversation.set(newConversation);
+		}
 	}
 
 	async function renameConversation(title: string) {
@@ -282,6 +300,7 @@ export function createConversationStore(database: string, table: string) {
 		currentMessageThread,
 		allConversations,
 		addMessage,
+		replaceMessage,
 		renameConversation,
 		deleteConversation,
 		duplicateConversation,
@@ -293,6 +312,7 @@ const { currentConversation,
 	currentMessageThread,
 	allConversations,
 	addMessage,
+	replaceMessage,
 	renameConversation,
 	deleteConversation,
 	duplicateConversation,
@@ -411,6 +431,7 @@ export {
 	folderStore,
 	configStore,
 	addMessage,
+	replaceMessage,
 	addFolder,
 	moveItemToFolder,
 	removeFolder,

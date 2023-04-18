@@ -5,14 +5,14 @@ export interface Message {
 	content: string;
 }
 
-export async function sendMessage(message: Message, history: Message[]) {
+export async function sendMessage(history: Message[]) {
 	const model = PUBLIC_MODEL;
 	const temperature = 0.7;
 
 	const payload = {
 		model: model,
 		temperature: temperature,
-		messages: [...history, message]
+		messages: history
 	};
 
 	const response = await fetch('/v1/chat/completions', {

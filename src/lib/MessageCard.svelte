@@ -7,6 +7,10 @@
 	import Icon360 from '@tabler/icons-svelte/dist/svelte/icons/Icon360.svelte';
 	import IconChevronLeft from '@tabler/icons-svelte/dist/svelte/icons/IconChevronLeft.svelte';
 	import IconChevronRight from '@tabler/icons-svelte/dist/svelte/icons/IconChevronRight.svelte';
+	import IconRefreshDot from '@tabler/icons-svelte/dist/svelte/icons/IconRefreshDot.svelte';
+	import IconPencil from '@tabler/icons-svelte/dist/svelte/icons/IconPencil.svelte';
+	import IconDeviceFloppy from '@tabler/icons-svelte/dist/svelte/icons/IconDeviceFloppy.svelte';
+	import IconCircleX from '@tabler/icons-svelte/dist/svelte/icons/IconCircleX.svelte';
 
 	export let msg = null;
 	export let selfPosition = 0;
@@ -14,16 +18,28 @@
 	export let placeholder = false;
 	export let forkSelected = false;
 
+	let messageText;
+
 	const dispatch = createEventDispatcher();
 
 	const fork = () => { dispatch('fork', msg); };
 	const nextThread = () => { dispatch('nextThread', msg); };
 	const prevThread = () => { dispatch('prevThread', msg); };
+	const regenerate = () => { dispatch('regenerate', msg); };
+	const saveInPlace = () => { dispatch('saveInPlace', {message: msg, newContent: messageText}); isEditing = false };
+	const saveAndFork = () => { dispatch('saveAndFork', {message: msg, newContent: messageText}); isEditing = false };
 
 	let isSource = false;
 
 	function toggle_source() {
 		isSource = !isSource;
+	}
+
+	let isEditing = false;
+
+	function toggle_edit() {
+		messageText = msg.content;
+		isEditing = !isEditing;
 	}
 </script>
 
@@ -44,6 +60,46 @@
 			</div>
 		</div>
 	</section>
+{:else if isEditing}
+	<div class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'}"  class:fork-selected={forkSelected}>
+		<textarea bind:value={messageText} class="w-full h-64 p-2 bg-surface-50-900-token" />
+		<hr />
+		<div class="flex items-center justify-between py-2">
+			<div class="flex-grow" />
+			<div class="flex items-center gap-3">
+				<button
+						type="button"
+						class="btn variant-glass-primary hover:variant-ghost"
+						on:click={saveInPlace}
+				>
+					<span>
+						<IconDeviceFloppy size="18" />
+					</span>
+					<span>Save in-place</span>
+				</button>
+				<button
+						type="button"
+						class="btn variant-glass-primary hover:variant-ghost"
+						on:click={saveAndFork}
+				>
+					<span>
+						<IconGitBranch size="18" />
+					</span>
+					<span>Save & Fork</span>
+				</button>
+				<button
+						type="button"
+						class="btn variant-glass-primary hover:variant-ghost"
+						on:click={toggle_edit}
+				>
+					<span>
+						<IconCircleX size="18" />
+					</span>
+					<span>Cancel</span>
+				</button>
+			</div>
+		</div>
+	</div>
 {:else}
 	<div class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'}"  class:fork-selected={forkSelected}>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
@@ -78,6 +134,28 @@
 			{/if}
 			<div class="flex-grow" />
 			<div class="flex items-center gap-3">
+				{#if msg.role === 'assistant'}
+					<button
+							type="button"
+							class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
+							title="Redo it!"
+							on:click={regenerate}
+					>
+						<span>
+							<IconRefreshDot size="18" />
+						</span>
+					</button>
+				{/if}
+				<button
+						type="button"
+						class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
+						title="Edit it!"
+						on:click={toggle_edit}
+				>
+					<span>
+						<IconPencil size="18" />
+					</span>
+				</button>
 				<button
 					type="button"
 					class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
@@ -87,7 +165,6 @@
 					<span>
 						<IconGitBranch size="18" />
 					</span>
-					<span class="sr-only">Fork it</span>
 				</button>
 				<button
 					type="button"
@@ -98,7 +175,6 @@
 					<span>
 						<Icon360 size="18" />
 					</span>
-					<span class="sr-only">Flip it</span>
 				</button>
 			</div>
 		</div>

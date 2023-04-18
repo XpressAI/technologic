@@ -12,7 +12,8 @@
 	import {
 		currentMessageThread,
 		currentConversation,
-		addMessage
+		addMessage,
+		replaceMessage
 	} from '$lib/stores/technologicStores';
 
 	import Menu from "$lib/Menu.svelte";
@@ -22,34 +23,60 @@
 		duplicateConversation,
 		selectMessageThreadThrough
 	} from "../../lib/stores/technologicStores";
+	import {ProgressRadial} from "@skeletonlabs/skeleton";
 
 	let inputText = '';
 	let afterMessages;
 	let waiting = false;
 
-	let forkMessageId = null;
+	let forkMessageId = $currentConversation?.lastMessageId;
 
 	$: conversationTitle = $currentConversation?.title || 'New conversation';
 
 	async function sendMessageToChat() {
+		waiting = true;
+		let message: Message;
 		if (inputText.trim().length > 0) {
-			const message: Message = {
+			message = {
 				role: 'user',
 				content: inputText
 			};
 
-			addMessage(message, { backend: 'human', model: 'egg' }, forkMessageId);
-			forkMessageId = null;
-
+			await addMessage(message, {backend: 'human', model: 'egg'}, forkMessageId);
+			forkMessageId = $currentConversation?.lastMessageId;
 			inputText = '';
-			waiting = true;
-			const history = $currentMessageThread.messages.map(
-				(msg) => $currentConversation?.messages[msg.self].message
-			);
-			const response = await sendMessage(message, history);
-			waiting = false;
-			addMessage(response, { backend: 'todo', model: 'even more todo' });
 		}
+
+		let history;
+		if(forkMessageId !== $currentConversation?.lastMessageId){
+			const forkMessageIdx = $currentMessageThread.messages.findIndex(it => it.self === forkMessageId);
+			history = $currentMessageThread.messages.slice(0, forkMessageIdx + 1).map(
+					(msg) => $currentConversation?.messages[msg.self].message
+			);
+		}else{
+			history = $currentMessageThread.messages.map(
+					(msg) => $currentConversation?.messages[msg.self].message
+			);
+		}
+
+		const response = await sendMessage(history);
+		await addMessage(response, { backend: 'todo', model: 'even more todo' }, forkMessageId);
+
+		forkMessageId = $currentConversation?.lastMessageId;
+		waiting = false;
+	}
+
+	async function regenerate(msg){
+		waiting = true;
+		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
+		const prevMessages = $currentMessageThread.messages.slice(0, position)
+		const parent = prevMessages[prevMessages.length - 1];
+		const history = prevMessages.map(
+			(msg) => $currentConversation?.messages[msg.self].message
+		);
+		const response = await sendMessage(history);
+		waiting = false;
+		addMessage(response, { backend: 'todo', model: 'even more todo' }, parent?.self);
 	}
 
 	$: scrollToEnd($currentMessageThread);
@@ -74,6 +101,7 @@
 		}
 	}
 
+	let isRenaming = false;
 	async function renameWithSummary() {
 		const message: Message = {
 			role: 'user',
@@ -84,12 +112,14 @@
 				(msg) => $currentConversation?.messages[msg.self].message
 		);
 
-		const response = await sendMessage(message, history);
+		isRenaming = true;
+		const response = await sendMessage([...history, message]);
 
 		const newTitle = response.content;
 		if (newTitle) {
 			renameConversation(newTitle);
 		}
+		isRenaming = false;
 	}
 
 	async function deleteConv() {
@@ -119,6 +149,25 @@
 			await selectMessageThreadThrough(msgAlt.messageIds[index + 1]);
 		}
 	}
+
+	async function saveAndFork(msg, newContent){
+		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
+		const prevMessages = $currentMessageThread.messages.slice(0, position)
+		const parent = prevMessages[prevMessages.length - 1];
+		const newMessage = {
+			...msg.message,
+			content: newContent
+		}
+
+		await addMessage(newMessage, { ...msg.source, edited: true }, parent?.self);
+	}
+
+	async function saveInPlace(msg, newContent){
+		await replaceMessage(msg, {
+			...msg.message,
+			content: newContent
+		}, { ...msg.source, edited: true });
+	}
 </script>
 
 <svelte:head>
@@ -127,7 +176,10 @@
 
 <div class="flex-col flex h-[100vh]">
 	<div class="p-5 pb-2 flex border-b">
-		<h3 class="flex-grow">{conversationTitle}</h3>
+		<h3 class="flex-grow flex gap-1 items-center">
+			{#if isRenaming || waiting}<ProgressRadial width="w-6"/>{/if}
+			{conversationTitle}
+		</h3>
 		<div>
 			<Menu id="conversation-menu">
 				<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
@@ -171,6 +223,9 @@
 					on:fork={(e) => fork(msg)}
 					on:prevThread={(e) => selectPrevThread(msg, msgAlt)}
 					on:nextThread={(e) => selectNextThread(msg, msgAlt)}
+					on:regenerate={(e) => regenerate(msg)}
+					on:saveAndFork={(e) => saveAndFork(msg, e.detail.newContent)}
+					on:saveInPlace={(e) => saveInPlace(msg, e.detail.newContent)}
 				/>
 			{/each}
 			{#if waiting}
