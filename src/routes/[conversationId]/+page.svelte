@@ -29,7 +29,7 @@
 	let afterMessages;
 	let waiting = false;
 
-	let forkMessageId = $currentConversation?.lastMessageId;
+	$: forkMessageId = $currentConversation?.lastMessageId;
 
 	$: conversationTitle = $currentConversation?.title || 'New conversation';
 
@@ -168,6 +168,15 @@
 			content: newContent
 		}, { ...msg.source, edited: true });
 	}
+
+	async function merge(msg){
+		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
+		const prevMessages = $currentMessageThread.messages.slice(0, position)
+		const parent = prevMessages[prevMessages.length - 1];
+		const msgA = $currentConversation?.messages[parent.self];
+		const msgB = msg;
+		await saveAndFork(msgA, msgA.message.content + msgB.message.content);
+	}
 </script>
 
 <svelte:head>
@@ -226,6 +235,7 @@
 					on:regenerate={(e) => regenerate(msg)}
 					on:saveAndFork={(e) => saveAndFork(msg, e.detail.newContent)}
 					on:saveInPlace={(e) => saveInPlace(msg, e.detail.newContent)}
+					on:merge={(e) => merge(msg)}
 				/>
 			{/each}
 			{#if waiting}

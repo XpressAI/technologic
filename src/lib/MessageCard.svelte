@@ -11,6 +11,7 @@
 	import IconPencil from '@tabler/icons-svelte/dist/svelte/icons/IconPencil.svelte';
 	import IconDeviceFloppy from '@tabler/icons-svelte/dist/svelte/icons/IconDeviceFloppy.svelte';
 	import IconCircleX from '@tabler/icons-svelte/dist/svelte/icons/IconCircleX.svelte';
+	import IconArrowMerge from '@tabler/icons-svelte/dist/svelte/icons/IconArrowMerge.svelte';
 
 	export let msg = null;
 	export let selfPosition = 0;
@@ -26,6 +27,7 @@
 	const nextThread = () => { dispatch('nextThread', msg); };
 	const prevThread = () => { dispatch('prevThread', msg); };
 	const regenerate = () => { dispatch('regenerate', msg); };
+	const merge = () => { dispatch('merge', msg); };
 	const saveInPlace = () => { dispatch('saveInPlace', {message: msg, newContent: messageText}); isEditing = false };
 	const saveAndFork = () => { dispatch('saveAndFork', {message: msg, newContent: messageText}); isEditing = false };
 
@@ -167,6 +169,16 @@
 					</span>
 				</button>
 				<button
+						type="button"
+						class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
+						title="Merge it!"
+						on:click={merge}
+				>
+					<span>
+						<IconArrowMerge size="18" />
+					</span>
+				</button>
+				<button
 					type="button"
 					class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
 					title="Flip it!"
@@ -183,6 +195,6 @@
 
 <style lang="postcss">
 	.fork-selected {
-		@apply border border-rose-600;
+		@apply shadow-violet-200 dark:shadow-violet-700 shadow-2xl;
 	}
 </style>
