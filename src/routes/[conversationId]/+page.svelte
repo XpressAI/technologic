@@ -62,7 +62,6 @@
 
 		let responseMessage;
 		sendMessageAndStream(history, async (content, done) => {
-			console.log(responseMessage);
 			if(!responseMessage){
 				responseMessage = await addMessage({role: 'assistant', content}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
 			}else{
