@@ -27,7 +27,7 @@ export async function sendMessage(history: Message[]) {
 	return out.choices[0].message;
 }
 
-export async function sendMessageAndStream(history: Message[], onMessage: (message: string, done: boolean) => void) {
+export async function sendMessageAndStream(history: Message[], onMessage: (message: string, done: boolean) => Promise<void>) {
     const model = PUBLIC_MODEL;
     const temperature = 0.7;
 
@@ -62,7 +62,7 @@ export async function sendMessageAndStream(history: Message[], onMessage: (messa
             const data = out.slice(0, eventSeparatorIndex);
 
             if(data.match(/^data: \[DONE\]/)){
-                onMessage("", true); // send end message.
+                await onMessage("", true); // send end message.
                 return;
             }
 
@@ -71,11 +71,11 @@ export async function sendMessageAndStream(history: Message[], onMessage: (messa
             out = out.slice(eventSeparatorIndex + 2);
 
             if (event.choices[0].finish_reason === 'stop') {
-                onMessage("", true); // send end message.
+                await onMessage("", true); // send end message.
             } else if (event.choices[0].role === 'assistant') {
-                onMessage("", false); // send start message.
+                await onMessage("", false); // send start message.
             } else {
-                onMessage(event.choices[0].delta.content, false);
+                await onMessage(event.choices[0].delta.content, false);
             }
         }
     }
