@@ -17,7 +17,9 @@
 
 <div class="menu relative" on:click|stopPropagation>
     <button class="btn-icon variant-glass !p-1 !m-0 w-auto h-auto" use:popup={popupSettings}>
-        <span><IconDotsVertical stroke={size} size={size * 12} /></span>
+        <slot name="button">
+            <span><IconDotsVertical stroke={size} size={size * 12} /></span>
+        </slot>
     </button>
     <div data-popup="menu-{id}" style="z-index: 9999">
         <slot />

@@ -6,6 +6,7 @@
 	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@fontsource/quicksand';
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
+	import IconSettings from '@tabler/icons-svelte/dist/svelte/icons/IconSettings.svelte';
 
 	import '../app.postcss';
 
@@ -24,6 +25,7 @@
 	;
 	import Folder from '$lib/Folder.svelte';
 	import { folderStore } from '$lib/stores/technologicStores';
+	import Menu from "$lib/Menu.svelte";
 </script>
 
 <AppShell>
@@ -44,10 +46,17 @@
 					<li><Folder folder={$folderStore} /></li>
 				</ul>
 			</div>
-			<div class="flex place-content-center p-2">
-				<div>
-					<LightSwitch />
-				</div>
+			<div class="flex place-content-end p-2">
+				<Menu id="settings">
+					<div slot="button">
+						<IconSettings />
+					</div>
+					<ul class="list card p-2">
+						<li class="flex gap-2">
+							<LightSwitch /> Dark Mode
+						</li>
+					</ul>
+				</Menu>
 			</div>
 			<div>
 				<a href="https://www.xpress.ai" class="card flex variant-ghost gap-2 place-content-center">
