@@ -24,6 +24,7 @@
 		selectMessageThreadThrough
 	} from "../../lib/stores/technologicStores";
 	import {ProgressRadial} from "@skeletonlabs/skeleton";
+	import {sendMessageAndStream} from "../../lib/OpenAI";
 
 	let inputText = '';
 	let afterMessages;
@@ -59,8 +60,18 @@
 			);
 		}
 
-		const response = await sendMessage(history);
-		await addMessage(response, { backend: 'todo', model: 'even more todo' }, forkMessageId);
+		let responseMessage;
+		sendMessageAndStream(history, async (content, done) => {
+			console.log(responseMessage);
+			if(!responseMessage){
+				responseMessage = await addMessage({role: 'assistant', content}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
+			}else{
+				responseMessage = await replaceMessage(responseMessage, {
+					...responseMessage.message,
+					content: responseMessage.message.content + content
+				}, responseMessage.source);
+			}
+		})
 
 		forkMessageId = $currentConversation?.lastMessageId;
 		waiting = false;
@@ -74,9 +85,18 @@
 		const history = prevMessages.map(
 			(msg) => $currentConversation?.messages[msg.self].message
 		);
-		const response = await sendMessage(history);
+		let responseMessage;
+		sendMessageAndStream(history, async (content, done) => {
+			if(!responseMessage){
+				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, parent?.self);
+			}else{
+				responseMessage = await replaceMessage(responseMessage, {
+					...responseMessage.message,
+					content: responseMessage.message.content + content
+				}, responseMessage.source);
+			}
+		})
 		waiting = false;
-		addMessage(response, { backend: 'todo', model: 'even more todo' }, parent?.self);
 	}
 
 	$: scrollToEnd($currentMessageThread);

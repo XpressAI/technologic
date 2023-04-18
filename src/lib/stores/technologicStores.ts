@@ -150,24 +150,28 @@ export function createConversationStore(database: string, table: string) {
 			});
 		}
 		currentConversation.set(newConversation);
+		return container;
 	}
 
 	async function replaceMessage(orig: MessageContainer, newMsg: Message) {
 		const $currentConversation = get(currentConversation);
 		if ($currentConversation !== null) {
+			const newMessage = {
+				...orig,
+				message: newMsg
+			};
 			const newConversation = {
 				...$currentConversation,
 				messages: {
 					...$currentConversation.messages,
-					[orig.id]: {
-						...orig,
-						message: newMsg
-					}
+					[orig.id]: newMessage
 				}
 			};
 			await db.setItem(newConversation.id, newConversation);
 			currentConversation.set(newConversation);
+			return newMessage;
 		}
+		return null;
 	}
 
 	async function renameConversation(title: string) {

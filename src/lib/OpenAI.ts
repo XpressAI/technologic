@@ -27,7 +27,7 @@ export async function sendMessage(history: Message[]) {
 	return out.choices[0].message;
 }
 
-export async function sendMessageAndStream(message: Message, history: Message[], onMessage: (message: string, done: boolean) => void) {
+export async function sendMessageAndStream(history: Message[], onMessage: (message: string, done: boolean) => void) {
     const model = PUBLIC_MODEL;
     const temperature = 0.7;
 
@@ -46,7 +46,7 @@ export async function sendMessageAndStream(message: Message, history: Message[],
         }
     });
 
-    const reader = response.body.getReader();
+    const reader = response.body?.getReader();
     const decoder = new TextDecoder('utf-8');
     let out = '';
     while (true) {
@@ -61,18 +61,20 @@ export async function sendMessageAndStream(message: Message, history: Message[],
         while ((eventSeparatorIndex = out.indexOf('\n\n')) !== -1) {
             const data = out.slice(0, eventSeparatorIndex);
 
+            if(data.match(/^data: \[DONE\]/)){
+                onMessage("", true); // send end message.
+                return;
+            }
+
             const event = JSON.parse(data.replace(/^data: /, ''));
 
             out = out.slice(eventSeparatorIndex + 2);
 
             if (event.choices[0].finish_reason === 'stop') {
-                console.log("End")
                 onMessage("", true); // send end message.
             } else if (event.choices[0].role === 'assistant') {
-                console.log("Role")
                 onMessage("", false); // send start message.
             } else {
-                console.log("content: " + event.choices[0].delta.content);
                 onMessage(event.choices[0].delta.content, false);
             }
         }
