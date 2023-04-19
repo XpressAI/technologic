@@ -4,12 +4,12 @@
 	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@fontsource/quicksand';
 
-	import { AppShell } from '@skeletonlabs/skeleton';
+	import {AppShell, Toast} from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';
 
 	import Folder from '$lib/components/Folder.svelte';
 	import Menu from "$lib/components/Menu.svelte";
-	
+
 	import { folderStore } from '$lib/stores/technologicStores';
 
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
@@ -53,11 +53,20 @@
 					<div slot="button">
 						<IconSettings />
 					</div>
-					<ul class="list card p-2">
+					<div class="card">
+					<ul class="list">
 						<li class="flex gap-2">
 							<LightSwitch /> Dark Mode
 						</li>
 					</ul>
+					<nav class="list-nav">
+						<ul class="list-nav card p-2">
+							<li>
+								<a href="/settings/backends">Backends</a>
+							</li>
+						</ul>
+					</nav>
+					</div>
 				</Menu>
 			</div>
 			<div>
@@ -75,3 +84,4 @@
 
 	<slot />
 </AppShell>
+<Toast />
