@@ -5,7 +5,7 @@
     import {configStore} from "$lib/stores/technologicStores";
     import {page} from "$app/stores";
     import type {BackendConfiguration} from "$lib/stores/schema";
-    import {ListBox, ListBoxItem} from "@skeletonlabs/skeleton";
+    import {ListBox, ListBoxItem, toastStore} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
 
     $: backend = $configStore.backends.find(backend => backend.name === $page.params.backendName);
@@ -23,6 +23,10 @@
             backends: $configStore.backends.map(b => b.name === backend.name ? dto : b)
         }
         await goto("/settings/backends");
+        toastStore.trigger({
+            message: `${dto.name} backend changes saved`,
+            background: "variant-filled-success"
+        });
     }
 
 </script>
