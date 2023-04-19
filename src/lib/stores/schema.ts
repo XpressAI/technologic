@@ -1,6 +1,7 @@
-import type { Message } from '../OpenAI';
+import type { Message } from '$lib/backend/types';
 
-export interface Backend {
+
+export interface BackendConfiguration {
 	name: string;
 	url: string;
 	token?: string;
@@ -8,8 +9,14 @@ export interface Backend {
 	defaultModel: string;
 }
 
+export interface CurrentBackend {
+	name: string;
+	model: string;
+}
+
 export interface Configuration {
-	backends: Backend[];
+	backends: BackendConfiguration[];
+	backend: CurrentBackend;
 }
 
 export interface Folder {

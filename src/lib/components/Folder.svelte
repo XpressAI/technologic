@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { ResolvedFolder } from './stores/schema';
+	import type { ResolvedFolder } from '../stores/schema';
 	import { page } from '$app/stores';
 	import IconFolder from '@tabler/icons-svelte/dist/svelte/icons/IconFolder.svelte';
 	import IconFolderPlus from '@tabler/icons-svelte/dist/svelte/icons/IconFolderPlus.svelte';
 	import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
 	import IconSubtask from '@tabler/icons-svelte/dist/svelte/icons/IconSubtask.svelte';
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
-	import { addFolder, removeFolder, renameFolder, moveItemToFolder } from './stores/technologicStores';
+	import { addFolder, removeFolder, renameFolder, moveItemToFolder } from '../stores/technologicStores';
 	import { flip } from 'svelte/animate';
 
 	import { dndzone, SHADOW_PLACEHOLDER_ITEM_ID } from 'svelte-dnd-action';

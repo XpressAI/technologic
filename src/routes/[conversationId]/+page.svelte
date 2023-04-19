@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { Message } from '$lib/OpenAI';
-	import { sendMessage } from '$lib/OpenAI';
-
 	import { tick } from 'svelte';
-	import MessageCard from '$lib/MessageCard.svelte';
+	import MessageCard from '$lib/components/MessageCard.svelte';
+	import Menu from "$lib/components/Menu.svelte";
+
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
 	import IconTopologyStarRing3 from '@tabler/icons-svelte/dist/svelte/icons/IconTopologyStarRing3.svelte';
 	import IconCopy from '@tabler/icons-svelte/dist/svelte/icons/IconCopy.svelte';
@@ -16,16 +15,17 @@
 		replaceMessage
 	} from '$lib/stores/technologicStores';
 
-	import Menu from "$lib/Menu.svelte";
+
 	import {
 		renameConversation,
 		deleteConversation,
 		duplicateConversation,
 		selectMessageThreadThrough,
-		deleteMessage
-	} from "../../lib/stores/technologicStores";
+		deleteMessage,
+		currentBackend
+	} from "$lib/stores/technologicStores";
 	import {ProgressRadial} from "@skeletonlabs/skeleton";
-	import {sendMessageAndStream} from "../../lib/OpenAI";
+	import type {Message} from "$lib/backend/types";
 
 	let inputText = '';
 	let afterMessages;
@@ -62,7 +62,7 @@
 		}
 
 		let responseMessage;
-		sendMessageAndStream(history, async (content, done) => {
+		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
 				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
 				forkMessageId = $currentConversation?.lastMessageId;
@@ -85,7 +85,7 @@
 			(msg) => $currentConversation?.messages[msg.self].message
 		);
 		let responseMessage;
-		sendMessageAndStream(history, async (content, done) => {
+		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
 				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, parent?.self);
 				waiting = false;
@@ -132,7 +132,7 @@
 		);
 
 		isRenaming = true;
-		const response = await sendMessage([...history, message]);
+		const response = await $currentBackend.sendMessage([...history, message]);
 
 		const newTitle = response.content;
 		if (newTitle) {

@@ -1,5 +1,5 @@
 <script>
-	import CodeRenderer from '$lib/CodeRenderer.svelte';
+	import CodeRenderer from '$lib/components/CodeRenderer.svelte';
 	import SvelteMarkdown from 'svelte-markdown';
 	import { createEventDispatcher } from 'svelte';
 	import { CodeBlock } from '@skeletonlabs/skeleton';

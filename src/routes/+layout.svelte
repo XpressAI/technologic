@@ -1,10 +1,17 @@
 <script lang="ts">
-	// This contains the bulk of Skeletons required styles:
 	import '@skeletonlabs/skeleton/styles/all.css';
 
-	// Your selected Skeleton theme:
 	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@fontsource/quicksand';
+
+	import { AppShell } from '@skeletonlabs/skeleton';
+	import { LightSwitch } from '@skeletonlabs/skeleton';
+
+	import Folder from '$lib/components/Folder.svelte';
+	import Menu from "$lib/components/Menu.svelte";
+	
+	import { folderStore } from '$lib/stores/technologicStores';
+
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
 	import IconSettings from '@tabler/icons-svelte/dist/svelte/icons/IconSettings.svelte';
 
@@ -20,12 +27,7 @@
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
-	import { AppShell } from '@skeletonlabs/skeleton';
-	import { LightSwitch } from '@skeletonlabs/skeleton';
-	;
-	import Folder from '$lib/Folder.svelte';
-	import { folderStore } from '$lib/stores/technologicStores';
-	import Menu from "$lib/Menu.svelte";
+
 </script>
 
 <AppShell>

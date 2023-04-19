@@ -1,11 +1,11 @@
 import { writable, get, derived } from 'svelte/store';
 import type { Readable } from 'svelte/store';
 import localforage from 'localforage';
-import type { Message } from '$lib/OpenAI';
+import type { Message } from '$lib/backend/types';
 import { page } from '$app/stores';
 import { browser } from '$app/environment';
 import type {
-	Backend,
+	BackendConfiguration,
 	Configuration,
 	Conversation,
 	ConversationDB,
@@ -19,8 +19,9 @@ import type {
 } from './schema';
 import { createItemStore } from './utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
+import {createBackend} from "../backend/OpenAI";
 
-function defaultBackends(): Backend[] {
+function defaultBackends(): BackendConfiguration[] {
 	return [
 		{
 			name: 'OpenAI',
@@ -40,8 +41,21 @@ function defaultBackends(): Backend[] {
 }
 
 const configStore = createItemStore<Configuration>('technologic', 'config', 'config', {
-	backends: defaultBackends()
+	backends: defaultBackends(),
+	backend: {
+		name: defaultBackends()[0].name,
+		model: defaultBackends()[0].defaultModel,
+	}
 });
+
+const currentBackend = derived(configStore, ($configStore) => {
+	const backend = $configStore.backends.find((it) => it.name === $configStore.backend.name);
+	if (backend === undefined) {
+		throw new Error('No backend found');
+	}
+	return createBackend(backend, $configStore.backend.model);
+})
+
 
 const initialFolderValue = {
 	name: '/',
@@ -455,6 +469,7 @@ export {
 	allConversations,
 	folderStore,
 	configStore,
+	currentBackend,
 	addMessage,
 	replaceMessage,
 	deleteMessage,
