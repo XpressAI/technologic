@@ -61,10 +61,12 @@
 			);
 		}
 
+		const source = {backend: $currentBackend.backend, model: $currentBackend.model};
+
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
-				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, forkMessageId);
+				responseMessage = await addMessage({role: 'assistant', content: content || ""}, source, forkMessageId);
 				forkMessageId = $currentConversation?.lastMessageId;
 				waiting = false;
 			}else{
@@ -84,10 +86,12 @@
 		const history = prevMessages.map(
 			(msg) => $currentConversation?.messages[msg.self].message
 		);
+
+		const source = {backend: $currentBackend.backend, model: $currentBackend.model};
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if(!responseMessage){
-				responseMessage = await addMessage({role: 'assistant', content: content || ""}, {backend: 'todo', model: 'even more todo'}, parent?.self);
+				responseMessage = await addMessage({role: 'assistant', content: content || ""}, source, parent?.self);
 				waiting = false;
 			}else{
 				responseMessage = await replaceMessage(responseMessage, {

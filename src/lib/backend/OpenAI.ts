@@ -78,6 +78,10 @@ export function createBackend(configuration: BackendConfiguration, model: string
     }
 
     return {
+        get name() { return configuration.name; },
+        get model() { return model; },
+        get temperature() { return temperature; },
+
         sendMessage,
         sendMessageAndStream
     }
