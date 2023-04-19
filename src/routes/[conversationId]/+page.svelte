@@ -21,7 +21,8 @@
 		renameConversation,
 		deleteConversation,
 		duplicateConversation,
-		selectMessageThreadThrough
+		selectMessageThreadThrough,
+		deleteMessage
 	} from "../../lib/stores/technologicStores";
 	import {ProgressRadial} from "@skeletonlabs/skeleton";
 	import {sendMessageAndStream} from "../../lib/OpenAI";
@@ -195,6 +196,12 @@
 		const msgB = msg;
 		await saveAndFork(msgA, msgA.message.content + msgB.message.content);
 	}
+
+	async function trash(msg){
+		if(confirm("Are you sure you want to delete this message?")){
+			await deleteMessage(msg);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -254,6 +261,7 @@
 					on:saveAndFork={(e) => saveAndFork(msg, e.detail.newContent)}
 					on:saveInPlace={(e) => saveInPlace(msg, e.detail.newContent)}
 					on:merge={(e) => merge(msg)}
+					on:trash={(e) => trash(msg)}
 				/>
 			{/each}
 			{#if waiting}

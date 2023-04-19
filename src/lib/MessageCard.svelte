@@ -12,6 +12,7 @@
 	import IconDeviceFloppy from '@tabler/icons-svelte/dist/svelte/icons/IconDeviceFloppy.svelte';
 	import IconCircleX from '@tabler/icons-svelte/dist/svelte/icons/IconCircleX.svelte';
 	import IconArrowMerge from '@tabler/icons-svelte/dist/svelte/icons/IconArrowMerge.svelte';
+	import IconTrash from '@tabler/icons-svelte/dist/svelte/icons/IconTrash.svelte';
 
 	export let msg = null;
 	export let selfPosition = 0;
@@ -28,6 +29,7 @@
 	const prevThread = () => { dispatch('prevThread', msg); };
 	const regenerate = () => { dispatch('regenerate', msg); };
 	const merge = () => { dispatch('merge', msg); };
+	const trash = () => { dispatch('trash', msg); };
 	const saveInPlace = () => { dispatch('saveInPlace', {message: msg, newContent: messageText}); isEditing = false };
 	const saveAndFork = () => { dispatch('saveAndFork', {message: msg, newContent: messageText}); isEditing = false };
 
@@ -156,6 +158,16 @@
 				>
 					<span>
 						<IconPencil size="18" />
+					</span>
+				</button>
+				<button
+						type="button"
+						class="btn-icon btn-icon-sm variant-glass hover:variant-ghost"
+						title="Trash it!"
+						on:click={trash}
+				>
+					<span>
+						<IconTrash size="18" />
 					</span>
 				</button>
 				<button

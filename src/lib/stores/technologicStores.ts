@@ -174,6 +174,25 @@ export function createConversationStore(database: string, table: string) {
 		return null;
 	}
 
+	async function deleteMessage(orig: MessageContainer) {
+		const $currentConversation = get(currentConversation);
+		if ($currentConversation !== null) {
+			// Remove orig from graph and replace its parent/child connections s.t. they are connected directly
+			const parentLink = $currentConversation.graph.find((it) => it.to === orig.id);
+			const childLinks = $currentConversation.graph.filter((it) => it.from === orig.id);
+			const newGraph = $currentConversation.graph.filter(it => it.from !== orig.id && it.to !== orig.id);
+			const newChildLinks = childLinks.map(it => ({from: parentLink?.from, to: it.to}));
+			const newConversation = {
+				...$currentConversation,
+				messages: Object.fromEntries(Object.entries($currentConversation.messages).filter(([key, value]) => key !== orig.id)),
+				graph: [...newGraph, ...newChildLinks],
+				lastMessageId: $currentConversation.lastMessageId === orig.id ? parentLink?.from : $currentConversation.lastMessageId
+			}
+			await db.setItem(newConversation.id, newConversation);
+			currentConversation.set(newConversation);
+		}
+	}
+
 	async function renameConversation(title: string) {
 		const $currentConversation = get(currentConversation);
 		let newConversation: Conversation;
@@ -308,7 +327,8 @@ export function createConversationStore(database: string, table: string) {
 		renameConversation,
 		deleteConversation,
 		duplicateConversation,
-		selectMessageThreadThrough
+		selectMessageThreadThrough,
+		deleteMessage
 	};
 }
 
@@ -320,7 +340,8 @@ const { currentConversation,
 	renameConversation,
 	deleteConversation,
 	duplicateConversation,
-	selectMessageThreadThrough
+	selectMessageThreadThrough,
+	deleteMessage
 } = createConversationStore('technologic', 'conversations');
 
 const folderStore = derived(
@@ -436,6 +457,7 @@ export {
 	configStore,
 	addMessage,
 	replaceMessage,
+	deleteMessage,
 	addFolder,
 	moveItemToFolder,
 	removeFolder,
