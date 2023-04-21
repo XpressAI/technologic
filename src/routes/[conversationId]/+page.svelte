@@ -63,7 +63,7 @@
 			);
 		}
 
-		const source = { backend: $currentBackend.backend, model: $currentBackend.model };
+		const source = { backend: $currentBackend.name, model: $currentBackend.model };
 
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
@@ -95,7 +95,7 @@
 		const parent = prevMessages[prevMessages.length - 1];
 		const history = prevMessages.map((msg) => $currentConversation?.messages[msg.self].message);
 
-		const source = { backend: $currentBackend.backend, model: $currentBackend.model };
+		const source = { backend: $currentBackend.name, model: $currentBackend.model };
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if (!responseMessage) {
@@ -187,23 +187,25 @@
 		}
 	}
 
-	async function saveAndFork(msg, newContent) {
+	async function saveAndFork(msg, newContent, newRole) {
 		const position = $currentMessageThread.messages.findIndex((it) => it.self === msg.id);
 		const prevMessages = $currentMessageThread.messages.slice(0, position);
 		const parent = prevMessages[prevMessages.length - 1];
 		const newMessage = {
 			...msg.message,
+			role: newRole,
 			content: newContent
 		};
 
 		await addMessage(newMessage, { ...msg.source, edited: true }, parent?.self);
 	}
 
-	async function saveInPlace(msg, newContent) {
+	async function saveInPlace(msg, newContent, newRole) {
 		await replaceMessage(
 			msg,
 			{
 				...msg.message,
+				role: newRole,
 				content: newContent
 			},
 			{ ...msg.source, edited: true }
@@ -281,6 +283,7 @@
 				{@const msg = $currentConversation?.messages[msgAlt.self]}
 				<MessageCard
 					msg={msg.message}
+					source={`${msg.source.backend}/${msg.source.model}`}
 					selfPosition={msgAlt.messageIds.indexOf(msgAlt.self) + 1}
 					alternativesCount={msgAlt.messageIds.length}
 					forkSelected={msg.id === forkMessageId}
@@ -288,8 +291,8 @@
 					on:prevThread={(e) => selectPrevThread(msg, msgAlt)}
 					on:nextThread={(e) => selectNextThread(msg, msgAlt)}
 					on:regenerate={(e) => regenerate(msg)}
-					on:saveAndFork={(e) => saveAndFork(msg, e.detail.newContent)}
-					on:saveInPlace={(e) => saveInPlace(msg, e.detail.newContent)}
+					on:saveAndFork={(e) => saveAndFork(msg, e.detail.newContent, e.detail.newRole)}
+					on:saveInPlace={(e) => saveInPlace(msg, e.detail.newContent, e.detail.newRole)}
 					on:merge={(e) => merge(msg)}
 					on:trash={(e) => trash(msg)}
 				/>

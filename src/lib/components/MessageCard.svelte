@@ -15,12 +15,14 @@
 	import IconTrash from '@tabler/icons-svelte/dist/svelte/icons/IconTrash.svelte';
 
 	export let msg = null;
+	export let source = null;
 	export let selfPosition = 0;
 	export let alternativesCount = 0;
 	export let placeholder = false;
 	export let forkSelected = false;
 
 	let messageText;
+	let messageRole;
 
 	const dispatch = createEventDispatcher();
 
@@ -43,11 +45,11 @@
 		dispatch('trash', msg);
 	};
 	const saveInPlace = () => {
-		dispatch('saveInPlace', { message: msg, newContent: messageText });
+		dispatch('saveInPlace', { message: msg, newContent: messageText, newRole: messageRole });
 		isEditing = false;
 	};
 	const saveAndFork = () => {
-		dispatch('saveAndFork', { message: msg, newContent: messageText });
+		dispatch('saveAndFork', { message: msg, newContent: messageText, newRole: messageRole });
 		isEditing = false;
 	};
 
@@ -61,6 +63,7 @@
 
 	function toggle_edit() {
 		messageText = msg.content;
+		messageRole = msg.role;
 		isEditing = !isEditing;
 	}
 </script>
@@ -89,7 +92,15 @@
 	>
 		<textarea bind:value={messageText} class="w-full h-64 p-2 bg-surface-50-900-token" />
 		<hr />
-		<div class="flex items-center justify-between py-2">
+		<div class="flex items-center justify-between py-2 gap-2">
+			<div class="input-group input-group-divider grid-cols-[auto_1fr] flex-grow-0">
+				<div class="input-group-shim">Role</div>
+				<select class="select" bind:value={messageRole}>
+					<option value="user">User</option>
+					<option value="assistant">Assistant</option>
+					<option value="system">System Message</option>
+				</select>
+			</div>
 			<div class="flex-grow" />
 			<div class="flex items-center gap-3">
 				<button
@@ -161,6 +172,11 @@
 						</span>
 					</button>
 				</div>
+			{/if}
+			{#if msg.role !== 'user'}
+			<div class="text-sm text-surface-400-500-token">
+				{source}
+			</div>
 			{/if}
 			<div class="flex-grow" />
 			<div class="flex items-center gap-3">
