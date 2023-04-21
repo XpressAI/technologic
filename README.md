@@ -8,6 +8,8 @@ Technologic is a powerful, feature-rich AI Chatbot Client that is designed to wo
 compatible backend. With a user-friendly interface and the ability to organize, modify, and manage your conversations,
 Technologic brings you a next-level chatting experience with your AI assistant.
 
+**[Demo: https://technologic.xpress.ai/](https://technologic.xpress.ai/)**
+
 ![Technologic Screenshot](./images/light-mode.png)
 
 ## Features
