@@ -347,7 +347,9 @@
                 }}
 				on:keypress={(e) => {
                     if (!navigator.userAgent.includes('Mac OS X')) {
-						sendMessageToChat();
+						if (e.ctrlKey && e.code === 'Enter') {
+						    sendMessageToChat();
+					    }
 					}
 				}}
 			/>
