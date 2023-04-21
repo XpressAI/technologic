@@ -31,13 +31,13 @@ function defaultBackends(): BackendConfiguration[] {
 			defaultModel: 'gpt-3.5-turbo',
 			token: 'YOUR_TOKEN_HERE'
 		},
-		{
+/*		{
 			name: 'xpress.ai',
 			url: 'http://100.82.217.33:5000/v1',
 			models: ['rwkv-raven-14b-eng-more'],
 			defaultModel: 'rwkv-raven-14b-eng-more',
 			token: 'YOUR_TOKEN_HERE'
-		}
+		}*/
 	];
 }
 
