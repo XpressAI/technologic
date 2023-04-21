@@ -39,7 +39,7 @@
 					<div class="flex gap-1 text-2xl font-bold items-center">
 						Technologic <IconMessageChatbot />
 					</div>
-					<span class="text-lg">Branching Chat GPT</span>
+					<span class="text-lg">Branching AI Chat</span>
 				</div>
 			</a>
 			<div class="flex-grow mt-2">
