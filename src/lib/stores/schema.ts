@@ -65,6 +65,7 @@ export interface Conversation {
 	messages: MessageKV;
 	graph: Link[];
 	lastMessageId?: string;
+	isUntitled: boolean;
 }
 
 export interface MessageAlternative {

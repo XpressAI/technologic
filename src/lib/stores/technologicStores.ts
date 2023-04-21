@@ -144,6 +144,7 @@ export function createConversationStore(database: string, table: string) {
 			newConversation = {
 				id: (await db.keys()).length.toString(),
 				title: 'New Conversation',
+				isUntitled: true,
 				messages: {
 					[container.id]: container
 				},

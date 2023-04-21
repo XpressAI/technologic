@@ -92,6 +92,9 @@
 					responseMessage.source
 				);
 			}
+			if(done && $currentConversation.isUntitled){
+				renameWithSummary();
+			}
 		});
 	}
 
