@@ -14,7 +14,7 @@ Technologic brings you a next-level chatting experience with your AI assistant.
 
 - **Secure Storage**: Your conversations are stored locally on your computer using your browser's IndexedDB storage.
 - **Backend Compatibility**: Works with any backend compatible with OpenAI's API.
-- **Bring Your Own API Key**: Easily configure your OpenAI API key or any other compatible backend.
+- **Bring Your Own API Key**: Easily configure your OpenAI API key or any other compatible backend (e.g. [xai-llm-server](https://github.com/XpressAI/xai-llm-server)).
 - **Organize Conversations**: Keep your conversations tidy by organizing them into folders.
 - **Message Modification**: Edit and modify messages, both sent and received, as needed.
 - **Custom Personality**: Support for "System Messages" to give your chatbot a unique personality (if supported by the backend).
