@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import MessageCard from '$lib/components/MessageCard.svelte';
-	import Menu from "$lib/components/Menu.svelte";
+	import Menu from '$lib/components/Menu.svelte';
 
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
 	import IconTopologyStarRing3 from '@tabler/icons-svelte/dist/svelte/icons/IconTopologyStarRing3.svelte';
@@ -16,7 +16,6 @@
 		replaceMessage
 	} from '$lib/stores/technologicStores';
 
-
 	import {
 		renameConversation,
 		deleteConversation,
@@ -24,9 +23,9 @@
 		selectMessageThreadThrough,
 		deleteMessage,
 		currentBackend
-	} from "$lib/stores/technologicStores";
-	import {drawerStore, ProgressRadial} from "@skeletonlabs/skeleton";
-	import type {Message} from "$lib/backend/types";
+	} from '$lib/stores/technologicStores';
+	import { drawerStore, ProgressRadial } from '@skeletonlabs/skeleton';
+	import type { Message } from '$lib/backend/types';
 
 	let inputText = '';
 	let afterMessages;
@@ -45,62 +44,78 @@
 				content: inputText
 			};
 
-			await addMessage(message, {backend: 'human', model: 'egg'}, forkMessageId);
+			await addMessage(message, { backend: 'human', model: 'egg' }, forkMessageId);
 			forkMessageId = $currentConversation?.lastMessageId;
 			inputText = '';
 		}
 
 		let history;
-		if(forkMessageId !== $currentConversation?.lastMessageId){
-			const forkMessageIdx = $currentMessageThread.messages.findIndex(it => it.self === forkMessageId);
-			history = $currentMessageThread.messages.slice(0, forkMessageIdx + 1).map(
-					(msg) => $currentConversation?.messages[msg.self].message
+		if (forkMessageId !== $currentConversation?.lastMessageId) {
+			const forkMessageIdx = $currentMessageThread.messages.findIndex(
+				(it) => it.self === forkMessageId
 			);
-		}else{
+			history = $currentMessageThread.messages
+				.slice(0, forkMessageIdx + 1)
+				.map((msg) => $currentConversation?.messages[msg.self].message);
+		} else {
 			history = $currentMessageThread.messages.map(
-					(msg) => $currentConversation?.messages[msg.self].message
+				(msg) => $currentConversation?.messages[msg.self].message
 			);
 		}
 
-		const source = {backend: $currentBackend.backend, model: $currentBackend.model};
+		const source = { backend: $currentBackend.backend, model: $currentBackend.model };
 
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
-			if(!responseMessage){
-				responseMessage = await addMessage({role: 'assistant', content: content || ""}, source, forkMessageId);
+			if (!responseMessage) {
+				responseMessage = await addMessage(
+					{ role: 'assistant', content: content || '' },
+					source,
+					forkMessageId
+				);
 				forkMessageId = $currentConversation?.lastMessageId;
 				waiting = false;
-			}else{
-				responseMessage = await replaceMessage(responseMessage, {
-					...responseMessage.message,
-					content: responseMessage.message.content + content
-				}, responseMessage.source);
+			} else {
+				responseMessage = await replaceMessage(
+					responseMessage,
+					{
+						...responseMessage.message,
+						content: responseMessage.message.content + content
+					},
+					responseMessage.source
+				);
 			}
-		})
+		});
 	}
 
-	async function regenerate(msg){
+	async function regenerate(msg) {
 		waiting = true;
-		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
-		const prevMessages = $currentMessageThread.messages.slice(0, position)
+		const position = $currentMessageThread.messages.findIndex((it) => it.self === msg.id);
+		const prevMessages = $currentMessageThread.messages.slice(0, position);
 		const parent = prevMessages[prevMessages.length - 1];
-		const history = prevMessages.map(
-			(msg) => $currentConversation?.messages[msg.self].message
-		);
+		const history = prevMessages.map((msg) => $currentConversation?.messages[msg.self].message);
 
-		const source = {backend: $currentBackend.backend, model: $currentBackend.model};
+		const source = { backend: $currentBackend.backend, model: $currentBackend.model };
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
-			if(!responseMessage){
-				responseMessage = await addMessage({role: 'assistant', content: content || ""}, source, parent?.self);
+			if (!responseMessage) {
+				responseMessage = await addMessage(
+					{ role: 'assistant', content: content || '' },
+					source,
+					parent?.self
+				);
 				waiting = false;
-			}else{
-				responseMessage = await replaceMessage(responseMessage, {
-					...responseMessage.message,
-					content: responseMessage.message.content + content
-				}, responseMessage.source);
+			} else {
+				responseMessage = await replaceMessage(
+					responseMessage,
+					{
+						...responseMessage.message,
+						content: responseMessage.message.content + content
+					},
+					responseMessage.source
+				);
 			}
-		})
+		});
 	}
 
 	$: scrollToEnd($currentMessageThread);
@@ -112,11 +127,9 @@
 		}
 	}
 
-
 	async function fork(msg) {
 		forkMessageId = msg.id;
 	}
-
 
 	function rename() {
 		const newTitle = prompt('What name do you want to use?', conversationTitle);
@@ -133,7 +146,7 @@
 		};
 
 		const history = $currentMessageThread.messages.map(
-				(msg) => $currentConversation?.messages[msg.self].message
+			(msg) => $currentConversation?.messages[msg.self].message
 		);
 
 		isRenaming = true;
@@ -174,36 +187,40 @@
 		}
 	}
 
-	async function saveAndFork(msg, newContent){
-		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
-		const prevMessages = $currentMessageThread.messages.slice(0, position)
+	async function saveAndFork(msg, newContent) {
+		const position = $currentMessageThread.messages.findIndex((it) => it.self === msg.id);
+		const prevMessages = $currentMessageThread.messages.slice(0, position);
 		const parent = prevMessages[prevMessages.length - 1];
 		const newMessage = {
 			...msg.message,
 			content: newContent
-		}
+		};
 
 		await addMessage(newMessage, { ...msg.source, edited: true }, parent?.self);
 	}
 
-	async function saveInPlace(msg, newContent){
-		await replaceMessage(msg, {
-			...msg.message,
-			content: newContent
-		}, { ...msg.source, edited: true });
+	async function saveInPlace(msg, newContent) {
+		await replaceMessage(
+			msg,
+			{
+				...msg.message,
+				content: newContent
+			},
+			{ ...msg.source, edited: true }
+		);
 	}
 
-	async function merge(msg){
-		const position = $currentMessageThread.messages.findIndex(it => it.self === msg.id)
-		const prevMessages = $currentMessageThread.messages.slice(0, position)
+	async function merge(msg) {
+		const position = $currentMessageThread.messages.findIndex((it) => it.self === msg.id);
+		const prevMessages = $currentMessageThread.messages.slice(0, position);
 		const parent = prevMessages[prevMessages.length - 1];
 		const msgA = $currentConversation?.messages[parent.self];
 		const msgB = msg;
 		await saveAndFork(msgA, msgA.message.content + msgB.message.content);
 	}
 
-	async function trash(msg){
-		if(confirm("Are you sure you want to delete this message?")){
+	async function trash(msg) {
+		if (confirm('Are you sure you want to delete this message?')) {
 			await deleteMessage(msg);
 		}
 	}
@@ -216,15 +233,18 @@
 <div class="flex-col flex h-[100vh]">
 	<div class="p-5 pb-2 flex border-b">
 		<h3 class="flex-grow flex gap-1 items-center">
-			{#if isRenaming || waiting}<ProgressRadial width="w-6"/>{/if}
+			{#if isRenaming || waiting}<ProgressRadial width="w-6" />{/if}
 			{conversationTitle}
 		</h3>
 		<div class="flex gap-2">
-			<button class="btn-icon w-8 h-8 p-0 variant-soft-surface"
+			{#if $currentConversation}
+				<button
+					class="btn-icon w-8 h-8 p-0 variant-soft-surface"
 					on:click={() => drawerStore.open()}
-			>
-				<span><IconGitCommit /></span>
-			</button>
+				>
+					<span><IconGitCommit /></span>
+				</button>
+			{/if}
 			<Menu id="conversation-menu">
 				<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
 					<li>

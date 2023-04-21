@@ -1,6 +1,5 @@
 import type { Message } from '$lib/backend/types';
 
-
 export interface BackendConfiguration {
 	name: string;
 	url: string;

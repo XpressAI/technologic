@@ -4,11 +4,11 @@
 	import '@skeletonlabs/skeleton/themes/theme-hamlindigo.css';
 	//import '@fontsource/quicksand';
 
-	import {AppShell, Drawer, Toast} from '@skeletonlabs/skeleton';
+	import { AppShell, Drawer, Toast } from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';
 
 	import Folder from '$lib/components/Folder.svelte';
-	import Menu from "$lib/components/Menu.svelte";
+	import Menu from '$lib/components/Menu.svelte';
 
 	import { folderStore } from '$lib/stores/technologicStores';
 
@@ -25,10 +25,8 @@
 
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
-	import ConversationGraph from "$lib/components/ConversationGraph.svelte";
+	import ConversationGraph from '$lib/components/ConversationGraph.svelte';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
-
-
 </script>
 
 <AppShell>
@@ -38,7 +36,9 @@
 		>
 			<a href="/">
 				<div class="flex flex-col">
-					<div class="flex gap-1 text-2xl font-bold items-center">Technologic <IconMessageChatbot /></div>
+					<div class="flex gap-1 text-2xl font-bold items-center">
+						Technologic <IconMessageChatbot />
+					</div>
 					<span class="text-lg">Branching Chat GPT</span>
 				</div>
 			</a>
@@ -55,18 +55,18 @@
 						<IconSettings />
 					</div>
 					<div class="card">
-					<ul class="list">
-						<li class="flex gap-2">
-							<LightSwitch /> Dark Mode
-						</li>
-					</ul>
-					<nav class="list-nav">
-						<ul class="list-nav card p-2">
-							<li>
-								<a href="/settings/backends">Backends</a>
+						<ul class="list">
+							<li class="flex gap-2">
+								<LightSwitch /> Dark Mode
 							</li>
 						</ul>
-					</nav>
+						<nav class="list-nav">
+							<ul class="list-nav card p-2">
+								<li>
+									<a href="/settings/backends">Backends</a>
+								</li>
+							</ul>
+						</nav>
 					</div>
 				</Menu>
 			</div>

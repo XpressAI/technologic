@@ -19,7 +19,7 @@ import type {
 } from './schema';
 import { createItemStore } from './utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import {createBackend} from "../backend/OpenAI";
+import { createBackend } from '../backend/OpenAI';
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
@@ -44,7 +44,7 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 	backends: defaultBackends(),
 	backend: {
 		name: defaultBackends()[0].name,
-		model: defaultBackends()[0].defaultModel,
+		model: defaultBackends()[0].defaultModel
 	}
 });
 
@@ -54,8 +54,7 @@ const currentBackend = derived(configStore, ($configStore) => {
 		throw new Error('No backend found');
 	}
 	return createBackend(backend, $configStore.backend.model);
-})
-
+});
 
 const initialFolderValue = {
 	name: '/',
@@ -136,10 +135,7 @@ export function createConversationStore(database: string, table: string) {
 					...$currentConversation.messages,
 					[container.id]: container
 				},
-				graph: [
-					...$currentConversation.graph,
-					{ from: parentMessageId, to: container.id }
-				],
+				graph: [...$currentConversation.graph, { from: parentMessageId, to: container.id }],
 				lastMessageId: container.id
 			};
 			await db.setItem(newConversation.id, newConversation);
@@ -194,14 +190,21 @@ export function createConversationStore(database: string, table: string) {
 			// Remove orig from graph and replace its parent/child connections s.t. they are connected directly
 			const parentLink = $currentConversation.graph.find((it) => it.to === orig.id);
 			const childLinks = $currentConversation.graph.filter((it) => it.from === orig.id);
-			const newGraph = $currentConversation.graph.filter(it => it.from !== orig.id && it.to !== orig.id);
-			const newChildLinks = childLinks.map(it => ({from: parentLink?.from, to: it.to}));
+			const newGraph = $currentConversation.graph.filter(
+				(it) => it.from !== orig.id && it.to !== orig.id
+			);
+			const newChildLinks = childLinks.map((it) => ({ from: parentLink?.from, to: it.to }));
 			const newConversation = {
 				...$currentConversation,
-				messages: Object.fromEntries(Object.entries($currentConversation.messages).filter(([key, value]) => key !== orig.id)),
+				messages: Object.fromEntries(
+					Object.entries($currentConversation.messages).filter(([key, value]) => key !== orig.id)
+				),
 				graph: [...newGraph, ...newChildLinks],
-				lastMessageId: $currentConversation.lastMessageId === orig.id ? parentLink?.from : $currentConversation.lastMessageId
-			}
+				lastMessageId:
+					$currentConversation.lastMessageId === orig.id
+						? parentLink?.from
+						: $currentConversation.lastMessageId
+			};
 			await db.setItem(newConversation.id, newConversation);
 			currentConversation.set(newConversation);
 		}
@@ -255,8 +258,10 @@ export function createConversationStore(database: string, table: string) {
 			await db.removeItem($currentConversation.id);
 			rawFolderStore.update((root) => {
 				const folder = findConversationFolder(root, $currentConversation);
-				if(folder){
-					folder.conversations = folder.conversations.filter((it) => it !== $currentConversation.id);
+				if (folder) {
+					folder.conversations = folder.conversations.filter(
+						(it) => it !== $currentConversation.id
+					);
 				}
 				return root;
 			});
@@ -277,7 +282,7 @@ export function createConversationStore(database: string, table: string) {
 			await updateAllConversations();
 			rawFolderStore.update((root) => {
 				const folder = findConversationFolder(root, $currentConversation);
-				if(folder){
+				if (folder) {
 					folder.conversations = [...folder.conversations, newConversation.id];
 				}
 				return root;
@@ -287,7 +292,7 @@ export function createConversationStore(database: string, table: string) {
 
 	async function selectMessageThreadThrough(messageId: string) {
 		const $currentConversation = get(currentConversation);
-		if($currentConversation == null) return;
+		if ($currentConversation == null) return;
 
 		const message = $currentConversation.messages[messageId];
 		if (!message) return;
@@ -295,10 +300,10 @@ export function createConversationStore(database: string, table: string) {
 		let target = $currentConversation.graph.find((it) => it.from === messageId)?.to;
 		if (!target) {
 			target = messageId;
-		}else{
-			while(target != null){
+		} else {
+			while (target != null) {
 				const next = $currentConversation.graph.find((it) => it.from === target)?.to;
-				if(next == null) break;
+				if (next == null) break;
 				target = next;
 			}
 		}
@@ -306,7 +311,7 @@ export function createConversationStore(database: string, table: string) {
 		const newConversation = {
 			...$currentConversation,
 			lastMessageId: target
-		}
+		};
 		//await db.setItem(newConversation.id, newConversation);
 		currentConversation.set(newConversation);
 	}
@@ -346,7 +351,8 @@ export function createConversationStore(database: string, table: string) {
 	};
 }
 
-const { currentConversation,
+const {
+	currentConversation,
 	currentMessageThread,
 	allConversations,
 	addMessage,

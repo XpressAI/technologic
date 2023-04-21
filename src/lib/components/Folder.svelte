@@ -6,11 +6,16 @@
 	import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
 	import IconSubtask from '@tabler/icons-svelte/dist/svelte/icons/IconSubtask.svelte';
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
-	import { addFolder, removeFolder, renameFolder, moveItemToFolder } from '../stores/technologicStores';
+	import {
+		addFolder,
+		removeFolder,
+		renameFolder,
+		moveItemToFolder
+	} from '../stores/technologicStores';
 	import { flip } from 'svelte/animate';
 
 	import { dndzone, SHADOW_PLACEHOLDER_ITEM_ID } from 'svelte-dnd-action';
-	import Menu from "./Menu.svelte";
+	import Menu from './Menu.svelte';
 
 	export let folder: ResolvedFolder;
 
@@ -23,18 +28,18 @@
 		}
 	}
 
-	function remove(){
-		if(folder.contents.length > 0){
-			alert("Folder is not empty. Please delete or move all items first.");
-		}else{
-			const reallyDelete = confirm("Are you sure you want to delete this folder?");
-			if(reallyDelete){
+	function remove() {
+		if (folder.contents.length > 0) {
+			alert('Folder is not empty. Please delete or move all items first.');
+		} else {
+			const reallyDelete = confirm('Are you sure you want to delete this folder?');
+			if (reallyDelete) {
 				removeFolder(folder);
 			}
 		}
 	}
 
-	function rename(){
+	function rename() {
 		const name = prompt('Folder name', folder.name);
 		if (name) {
 			renameFolder(folder, name);
@@ -62,8 +67,10 @@
 			</span>
 			<span class="!ml-2 flex-grow text-left">{folder.name}</span>
 			<span>
-				<Menu size={1} id={folder.path.join("-")}>
-					<ul class="card shadow-xl dark:shadow-slate-700 !bg-surface-50-900-token hover:!bg-surface-200-700-token list-nav">
+				<Menu size={1} id={folder.path.join('-')}>
+					<ul
+						class="card shadow-xl dark:shadow-slate-700 !bg-surface-50-900-token hover:!bg-surface-200-700-token list-nav"
+					>
 						<li>
 							<a on:click={rename}>
 								<span><IconEdit size="16" stroke="1" /></span>
@@ -72,13 +79,13 @@
 						</li>
 						<li>
 							<a on:click={create}>
-								<span><IconSubtask size="16" stroke="1"/></span>
+								<span><IconSubtask size="16" stroke="1" /></span>
 								<span>New Folder</span>
 							</a>
 						</li>
 						<li>
 							<a on:click={remove}>
-								<span><IconTrashX size="16" stroke="1"/></span>
+								<span><IconTrashX size="16" stroke="1" /></span>
 								<span>Delete</span>
 							</a>
 						</li>
@@ -107,7 +114,8 @@
 						{:else if content.type === 'folder'}
 							<svelte:self folder={content.item} />
 						{:else}
-							<a class="overflow-hidden"
+							<a
+								class="overflow-hidden"
 								href="/{content.id}"
 								class:bg-primary-active-token={$page.params.conversationId === content.id}
 							>

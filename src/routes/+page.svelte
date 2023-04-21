@@ -1,14 +1,15 @@
 <script lang="ts">
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
-	import {configStore} from "../lib/stores/technologicStores";
+	import { configStore } from '../lib/stores/technologicStores';
 
-	$: misconfiguredOpenAI = !$configStore.backends.find(it => it.name === 'OpenAI')?.token.startsWith('sk-');
-
+	$: misconfiguredOpenAI = !$configStore.backends
+		.find((it) => it.name === 'OpenAI')
+		?.token.startsWith('sk-');
 </script>
 
 <main class="card m-5">
 	<header class="card-header">
-		<h1 class="flex gap-1">Technologic  <IconMessageChatbot size="48"/></h1>
+		<h1 class="flex gap-1">Technologic <IconMessageChatbot size="48" /></h1>
 		<h2>Branching Chat GPT</h2>
 	</header>
 	<section class="p-4 gap-2 flex flex-col">
@@ -34,7 +35,8 @@
 </main>
 
 {#if misconfiguredOpenAI}
-<section class="card variant-glass-error m-5 p-4">
-	You must set your OpenAI in the <a href="/settings/backends/OpenAI">Backend Settings</a> to be able to use that backend.
-</section>
+	<section class="card variant-glass-error m-5 p-4">
+		You must set your OpenAI in the <a href="/settings/backends/OpenAI">Backend Settings</a> to be able
+		to use that backend.
+	</section>
 {/if}
