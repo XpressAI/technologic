@@ -4,7 +4,7 @@
 	import '@skeletonlabs/skeleton/themes/theme-hamlindigo.css';
 	//import '@fontsource/quicksand';
 
-	import {AppShell, Toast} from '@skeletonlabs/skeleton';
+	import {AppShell, Drawer, Toast} from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';
 
 	import Folder from '$lib/components/Folder.svelte';
@@ -25,6 +25,7 @@
 
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
+	import ConversationGraph from "$lib/components/ConversationGraph.svelte";
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
 
@@ -85,3 +86,6 @@
 	<slot />
 </AppShell>
 <Toast />
+<Drawer width="w-fit">
+	<ConversationGraph />
+</Drawer>

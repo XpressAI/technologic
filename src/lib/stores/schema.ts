@@ -55,7 +55,7 @@ interface MessageKV {
 	[id: string]: MessageContainer;
 }
 
-interface Link {
+export interface Link {
 	from?: string;
 	to: string;
 }

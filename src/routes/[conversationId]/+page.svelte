@@ -7,6 +7,7 @@
 	import IconTopologyStarRing3 from '@tabler/icons-svelte/dist/svelte/icons/IconTopologyStarRing3.svelte';
 	import IconCopy from '@tabler/icons-svelte/dist/svelte/icons/IconCopy.svelte';
 	import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
+	import IconGitCommit from '@tabler/icons-svelte/dist/svelte/icons/IconGitCommit.svelte';
 
 	import {
 		currentMessageThread,
@@ -24,7 +25,7 @@
 		deleteMessage,
 		currentBackend
 	} from "$lib/stores/technologicStores";
-	import {ProgressRadial} from "@skeletonlabs/skeleton";
+	import {drawerStore, ProgressRadial} from "@skeletonlabs/skeleton";
 	import type {Message} from "$lib/backend/types";
 
 	let inputText = '';
@@ -218,7 +219,12 @@
 			{#if isRenaming || waiting}<ProgressRadial width="w-6"/>{/if}
 			{conversationTitle}
 		</h3>
-		<div>
+		<div class="flex gap-2">
+			<button class="btn-icon w-8 h-8 p-0 variant-soft-surface"
+					on:click={() => drawerStore.open()}
+			>
+				<span><IconGitCommit /></span>
+			</button>
 			<Menu id="conversation-menu">
 				<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
 					<li>
