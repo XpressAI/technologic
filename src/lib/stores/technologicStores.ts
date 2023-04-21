@@ -20,6 +20,7 @@ import type {
 import { createItemStore } from './utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
 import { createBackend } from '../backend/OpenAI';
+import {goto} from "$app/navigation";
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
@@ -158,6 +159,7 @@ export function createConversationStore(database: string, table: string) {
 					conversations: [...folder.conversations, newConversation.id]
 				};
 			});
+			goto(`/${newConversation.id}`);
 		}
 		currentConversation.set(newConversation);
 		return container;
