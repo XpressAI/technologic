@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '@skeletonlabs/skeleton/styles/all.css';
 
-	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
-	import '@fontsource/quicksand';
+	import '@skeletonlabs/skeleton/themes/theme-hamlindigo.css';
+	//import '@fontsource/quicksand';
 
 	import {AppShell, Toast} from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';

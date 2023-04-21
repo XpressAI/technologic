@@ -2,11 +2,14 @@
     import IconServer from '@tabler/icons-svelte/dist/svelte/icons/IconServer.svelte';
     import IconDeviceFloppy from '@tabler/icons-svelte/dist/svelte/icons/IconDeviceFloppy.svelte';
     import IconCircleLetterX from '@tabler/icons-svelte/dist/svelte/icons/IconCircleLetterX.svelte';
+    import IconCirclePlus from '@tabler/icons-svelte/dist/svelte/icons/IconCirclePlus.svelte';
+    import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
     import {configStore} from "$lib/stores/technologicStores";
     import {page} from "$app/stores";
     import type {BackendConfiguration} from "$lib/stores/schema";
-    import {ListBox, ListBoxItem, toastStore} from "@skeletonlabs/skeleton";
+    import {toastStore} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
+    import EditableString from "../../../../lib/components/EditableString.svelte";
 
     $: backend = $configStore.backends.find(backend => backend.name === $page.params.backendName);
 
@@ -27,6 +30,19 @@
             message: `${dto.name} backend changes saved`,
             background: "variant-filled-success"
         });
+    }
+
+    async function deleteModel(model){
+        if(confirm(`Are you sure you want to delete the model ${model}?`)){
+            if(model === dto.defaultModel){
+                dto.defaultModel = dto.models[0] || "";
+            }
+            dto.models = dto.models.filter(m => m !== model);
+        }
+    }
+
+    async function addModel(){
+        dto.models = [...dto.models, ""];
     }
 
 </script>
@@ -54,12 +70,40 @@
         </label>
         <label class="label">
             <span>Default Model</span>
-            <ListBox>
+            <select class="select" bind:value={dto.defaultModel}>
+                <option value="" disabled>Select a model</option>
                 {#each dto.models as model}
-                    <ListBoxItem bind:group={dto.defaultModel} value={model}>{model}</ListBoxItem>
+                    <option value={model}>{model}</option>
                 {/each}
-            </ListBox>
+            </select>
         </label>
+        <div>
+            <h4>Models</h4>
+            <ul class="list">
+                {#each dto.models as model}
+                    <li class="flex">
+                        <EditableString bind:value={model} initialEditing={model === ""}/>
+                        <button class="btn-icon w-8 p-0 variant-soft-error"
+                                on:click={() => deleteModel(model)}
+                        >
+                            <IconTrashX size="16" />
+                        </button>
+                    </li>
+                {/each}
+                <li>
+                    <button class="btn variant-soft-surface"
+                            on:click={addModel}
+                    >
+                        <span>
+                            <IconCirclePlus size="16" />
+                        </span>
+                        <span>
+                            Add Model
+                        </span>
+                    </button>
+                </li>
+            </ul>
+        </div>
     </div>
     <div class="card-footer px-5 flex">
         <div class="flex-grow"></div>

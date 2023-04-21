@@ -2,10 +2,8 @@
     import IconServer from '@tabler/icons-svelte/dist/svelte/icons/IconServer.svelte';
     import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
 
-
     import {configStore} from "$lib/stores/technologicStores";
     import type {BackendConfiguration} from "$lib/stores/schema";
-    import {ListBox, ListBoxItem} from "@skeletonlabs/skeleton";
 
     $: currentBackend = $configStore.backends.find(backend => backend.name === $configStore.backend.name);
 
@@ -18,8 +16,18 @@
             }
         }
     }
+
+    function setModel(model: string){
+        $configStore = {
+            ...$configStore,
+            backend: {
+                ...$configStore.backend,
+                model: model
+            }
+        }
+    }
 </script>
-<section class="card p-3 m-3 variant-glass">
+<section class="card p-3 m-3 variant-glass flex flex-col gap-2">
     <h3>Backends</h3>
     <nav class="list-nav">
         <ul>
@@ -40,13 +48,17 @@
     </nav>
 </section>
 
-<section class="card p-3 m-3 variant-glass">
-    <h3>Models</h3>
-    <ListBox>
+<section class="card p-3 m-3 variant-glass flex flex-col gap-2">
+    <h3>Use Model:</h3>
+    <nav class="list-nav">
+        <ul>
         {#each currentBackend.models as model}
-            <ListBoxItem bind:group={$configStore.backend.model} value={model}>
-                {model}
-            </ListBoxItem>
+            <li>
+                <a on:click={() => setModel(model)} class:bg-surface-active-token={model === $configStore.backend.model}>
+                    <span>{model}</span>
+                </a>
+            </li>
         {/each}
-    </ListBox>
+        </ul>
+    </nav>
 </section>
