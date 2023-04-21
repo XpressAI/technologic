@@ -10,7 +10,7 @@
 <main class="card m-5">
 	<header class="card-header">
 		<h1 class="flex gap-1">Technologic <IconMessageChatbot size="48" /></h1>
-		<h2>Branching Chat GPT</h2>
+		<h2>Branching AI Chat</h2>
 	</header>
 	<section class="p-4 gap-4 flex flex-col">
 		<p>
