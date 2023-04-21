@@ -8,6 +8,7 @@
 	import IconCopy from '@tabler/icons-svelte/dist/svelte/icons/IconCopy.svelte';
 	import IconTrashX from '@tabler/icons-svelte/dist/svelte/icons/IconTrashX.svelte';
 	import IconGitCommit from '@tabler/icons-svelte/dist/svelte/icons/IconGitCommit.svelte';
+	import IconSendOff from '@tabler/icons-svelte/dist/svelte/icons/IconSendOff.svelte';
 
 	import {
 		currentMessageThread,
@@ -24,12 +25,13 @@
 		deleteMessage,
 		currentBackend
 	} from '$lib/stores/technologicStores';
-	import { drawerStore, ProgressRadial } from '@skeletonlabs/skeleton';
+	import {drawerStore, ProgressRadial, SlideToggle} from '@skeletonlabs/skeleton';
 	import type { Message } from '$lib/backend/types';
 
 	let inputText = '';
 	let afterMessages;
 	let waiting = false;
+	let autoSend = true;
 
 	$: forkMessageId = $currentConversation?.lastMessageId;
 
@@ -47,7 +49,12 @@
 			await addMessage(message, { backend: 'human', model: 'egg' }, forkMessageId);
 			forkMessageId = $currentConversation?.lastMessageId;
 			inputText = '';
+			if(!autoSend) {
+				waiting = false;
+				return;
+			}
 		}
+
 
 		let history;
 		if (forkMessageId !== $currentConversation?.lastMessageId) {
@@ -237,6 +244,9 @@
 		<h3 class="flex-grow flex gap-1 items-center">
 			{#if isRenaming || waiting}<ProgressRadial width="w-6" />{/if}
 			{conversationTitle}
+			{#if !autoSend}
+				<IconSendOff />
+			{/if}
 		</h3>
 		<div class="flex gap-2">
 			{#if $currentConversation}
@@ -272,6 +282,10 @@
 							<span><IconTrashX /></span>
 							<span>Delete</span>
 						</a>
+					</li>
+					<li><hr /></li>
+					<li class="p-3">
+						<SlideToggle name="slider-label" bind:checked={autoSend} size="sm">Auto Send</SlideToggle>
 					</li>
 				</ul>
 			</Menu>
@@ -318,8 +332,8 @@
 				}}
 			/>
 			<button type="submit" class="btn-icon variant-filled-primary">
-				<span
-					><svg
+				<span>
+					<svg
 						aria-hidden="true"
 						class="w-6 h-6 rotate-90"
 						fill="currentColor"
@@ -329,8 +343,8 @@
 						<path
 							d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
 						/>
-					</svg></span
-				>
+					</svg>
+				</span>
 				<span class="sr-only">Send message</span>
 			</button>
 		</div>
