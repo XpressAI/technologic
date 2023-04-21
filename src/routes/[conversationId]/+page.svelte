@@ -32,6 +32,7 @@
 	let afterMessages;
 	let waiting = false;
 	let autoSend = true;
+    let metaDown = false;
 
 	$: forkMessageId = $currentConversation?.lastMessageId;
 
@@ -328,8 +329,24 @@
 				id="chat"
 				class="textarea p-2 flex-grow"
 				placeholder="Your message..."
+                on:keydown={(e) => {
+                    if (navigator.userAgent.includes('Mac OS X')) {
+                        if (e.code === "MetaLeft" || e.code === "MetaRight") {
+                            metaDown = true;
+                        } else if (e.code === "Enter" && metaDown) {
+                            sendMessageToChat();
+                        }
+                    }
+                }}
+                on:keyup={(e) => {
+                    if (navigator.userAgent.includes('Mac OS X')) {
+                        if (e.code === "MetaLeft" || e.code === "MetaRight") {
+                            metaDown = false;
+                        }
+                    }
+                }}
 				on:keypress={(e) => {
-					if (e.ctrlKey && e.code === 'Enter') {
+                    if (!navigator.userAgent.includes('Mac OS X')) {
 						sendMessageToChat();
 					}
 				}}
