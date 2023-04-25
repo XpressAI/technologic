@@ -118,8 +118,8 @@ export function createConversationStore(database: string, table: string) {
 		});
 		allConversations.set(newValue);
 	}
-	async function addMessage(msg: Message, source: MessageSource, parentMessageId?: string) {
-		const $currentConversation = get(currentConversation);
+	async function addMessage(msg: Message, source: MessageSource, parentMessageId?: string, conversation?: Conversation) {
+		const $currentConversation = conversation || get(currentConversation);
 
 		const container: MessageContainer = {
 			id: Object.keys($currentConversation?.messages ?? {}).length.toString(),
@@ -166,12 +166,13 @@ export function createConversationStore(database: string, table: string) {
 		return container;
 	}
 
-	async function replaceMessage(orig: MessageContainer, newMsg: Message) {
-		const $currentConversation = get(currentConversation);
+	async function replaceMessage(orig: MessageContainer, newMsg: Message, msgSource: MessageSource, conversation?: Conversation) {
+		const $currentConversation = conversation || get(currentConversation);
 		if ($currentConversation !== null) {
 			const newMessage = {
 				...orig,
-				message: newMsg
+				message: newMsg,
+				source: msgSource
 			};
 			const newConversation = {
 				...$currentConversation,
@@ -181,7 +182,9 @@ export function createConversationStore(database: string, table: string) {
 				}
 			};
 			await db.setItem(newConversation.id, newConversation);
-			currentConversation.set(newConversation);
+			if(get(currentConversation)?.id == newConversation.id){
+				currentConversation.set(newConversation);
+			}
 			return newMessage;
 		}
 		return null;
@@ -213,21 +216,23 @@ export function createConversationStore(database: string, table: string) {
 		}
 	}
 
-	async function renameConversation(title: string) {
-		const $currentConversation = get(currentConversation);
+	async function renameConversation(title: string, conversation?: Conversation) {
+		const $currentConversation = conversation || get(currentConversation);
 		let newConversation: Conversation;
 		if ($currentConversation !== null) {
 			newConversation = {
 				...$currentConversation,
+				isUntitled: false,
 				title: title
 			};
 			await db.setItem(newConversation.id, newConversation);
 		} else {
 			newConversation = {
 				id: (await db.keys()).length.toString(),
-				title: 'New Conversation',
+				title: title,
 				messages: {},
 				graph: [],
+				isUntitled: false,
 				lastMessageId: undefined
 			};
 			await db.setItem(newConversation.id, newConversation);

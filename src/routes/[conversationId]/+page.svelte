@@ -73,6 +73,7 @@
 
 		const source = { backend: $currentBackend.name, model: $currentBackend.model };
 
+		let conversation;
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if (!responseMessage) {
@@ -81,6 +82,7 @@
 					source,
 					forkMessageId
 				);
+				conversation = $currentConversation;
 				forkMessageId = $currentConversation?.lastMessageId;
 				waiting = false;
 			} else {
@@ -90,11 +92,12 @@
 						...responseMessage.message,
 						content: responseMessage.message.content + content
 					},
-					responseMessage.source
+					responseMessage.source,
+					conversation
 				);
 			}
-			if(done && $currentConversation.isUntitled){
-				renameWithSummary();
+			if(done && $currentConversation.isUntitled && $currentConversation.id == conversation.id){
+				await renameWithSummary();
 			}
 		});
 	}
@@ -107,6 +110,7 @@
 		const history = prevMessages.map((msg) => $currentConversation?.messages[msg.self].message);
 
 		const source = { backend: $currentBackend.name, model: $currentBackend.model };
+		let conversation;
 		let responseMessage;
 		$currentBackend.sendMessageAndStream(history, async (content, done) => {
 			if (!responseMessage) {
@@ -115,6 +119,7 @@
 					source,
 					parent?.self
 				);
+				conversation = $currentConversation;
 				waiting = false;
 			} else {
 				responseMessage = await replaceMessage(
@@ -123,7 +128,8 @@
 						...responseMessage.message,
 						content: responseMessage.message.content + content
 					},
-					responseMessage.source
+					responseMessage.source,
+					conversation
 				);
 			}
 		});
@@ -229,7 +235,7 @@
 		const parent = prevMessages[prevMessages.length - 1];
 		const msgA = $currentConversation?.messages[parent.self];
 		const msgB = msg;
-		await saveAndFork(msgA, msgA.message.content + msgB.message.content);
+		await saveAndFork(msgA, msgA.message.content + msgB.message.content, msgA.message.role);
 	}
 
 	async function trash(msg) {
