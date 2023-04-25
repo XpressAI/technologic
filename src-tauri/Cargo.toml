@@ -5,7 +5,7 @@ description = "Technologic is a user-friendly AI Chatbot Client packed with feat
 authors = ["Paul Dubs", "Eduardo Gonzalez"]
 license = "MIT"
 repository = "https://github.com/XpressAI/technologic/"
-default-run = "app"
+default-run = "technologic"
 edition = "2021"
 rust-version = "1.59"
 
