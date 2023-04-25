@@ -16,31 +16,32 @@
 
 	import { dndzone, SHADOW_PLACEHOLDER_ITEM_ID } from 'svelte-dnd-action';
 	import Menu from './Menu.svelte';
+	import { alert, prompt, confirm } from "$lib/components/dialogs";
 
 	export let folder: ResolvedFolder;
 
 	let isOpen = true;
 
-	function create() {
-		const name = prompt('Folder name');
+	async function create() {
+		const name = await prompt('Folder name');
 		if (name) {
 			addFolder(folder, name);
 		}
 	}
 
-	function remove() {
+	async function remove() {
 		if (folder.contents.length > 0) {
-			alert('Folder is not empty. Please delete or move all items first.');
+			await alert('Folder is not empty. Please delete or move all items first.');
 		} else {
-			const reallyDelete = confirm('Are you sure you want to delete this folder?');
+			const reallyDelete = await confirm('Are you sure you want to delete this folder?');
 			if (reallyDelete) {
 				removeFolder(folder);
 			}
 		}
 	}
 
-	function rename() {
-		const name = prompt('Folder name', folder.name);
+	async function rename() {
+		const name = await prompt('Folder name', folder.name);
 		if (name) {
 			renameFolder(folder, name);
 		}
