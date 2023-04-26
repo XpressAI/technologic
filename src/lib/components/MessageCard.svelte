@@ -66,6 +66,12 @@
 		messageRole = msg.role;
 		isEditing = !isEditing;
 	}
+
+	const roleClasses = {
+		'user': 'variant-glass',
+		'assistant': 'variant-ghost',
+		'system': 'variant-soft-surface'
+	}
 </script>
 
 {#if placeholder}
@@ -87,7 +93,7 @@
 	</section>
 {:else if isEditing}
 	<div
-		class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'}"
+		class="card px-4 pt-4 m-2 {roleClasses[msg.role]}"
 		class:fork-selected={forkSelected}
 	>
 		<textarea bind:value={messageText} class="w-full h-64 p-2 bg-surface-50-900-token" />
@@ -138,7 +144,7 @@
 	</div>
 {:else}
 	<div
-		class="card px-4 pt-4 m-2 {msg.role === 'user' ? 'variant-glass' : 'variant-ghost'}"
+		class="card px-4 pt-4 m-2 {roleClasses[msg.role]}"
 		class:fork-selected={forkSelected}
 	>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
@@ -173,10 +179,14 @@
 					</button>
 				</div>
 			{/if}
-			{#if msg.role !== 'user'}
-			<div class="text-sm text-surface-400-500-token">
-				{source}
-			</div>
+			{#if msg.role === 'assistant'}
+				<div class="text-sm text-surface-400-500-token">
+					{source}
+				</div>
+			{:else if msg.role ==='system'}
+				<div class="text-sm text-surface-400-500-token">
+					System Message
+				</div>
 			{/if}
 			<div class="flex-grow" />
 			<div class="flex items-center gap-3">
