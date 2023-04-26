@@ -17,10 +17,12 @@
 
 	import '../app.postcss';
 
-	import hljs from 'highlight.js';
+	import hljs from 'highlight.js/lib/core';
+	import plaintext from 'highlight.js/lib/languages/plaintext';
 	import 'highlight.js/styles/tomorrow-night-bright.css';
 	import { storeHighlightJs } from '@skeletonlabs/skeleton';
 
+	hljs.registerLanguage('plaintext', plaintext);
 	storeHighlightJs.set(hljs);
 
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
