@@ -9,7 +9,9 @@
 	import type { BackendConfiguration } from '$lib/stores/schema';
 	import { toastStore } from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
-	import EditableString from '../../../../lib/components/EditableString.svelte';
+	import EditableString from '$lib/components/EditableString.svelte';
+	import { alert, prompt, confirm } from "$lib/components/dialogs";
+
 
 	$: backend = $configStore.backends.find((backend) => backend.name === $page.params.backendName);
 
@@ -33,7 +35,7 @@
 	}
 
 	async function deleteModel(model) {
-		if (confirm(`Are you sure you want to delete the model ${model}?`)) {
+		if (await confirm(`Are you sure you want to delete the model ${model}?`)) {
 			if (model === dto.defaultModel) {
 				dto.defaultModel = dto.models[0] || '';
 			}

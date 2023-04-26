@@ -28,6 +28,9 @@
 	import {drawerStore, ProgressRadial, SlideToggle} from '@skeletonlabs/skeleton';
 	import type { Message } from '$lib/backend/types';
 
+	import { prompt, confirm } from "$lib/components/dialogs";
+
+
 	let inputText = '';
 	let afterMessages;
 	let waiting = false;
@@ -148,8 +151,8 @@
 		forkMessageId = msg.id;
 	}
 
-	function rename() {
-		const newTitle = prompt('What name do you want to use?', conversationTitle);
+	async function rename() {
+		const newTitle = await prompt('What name do you want to use?', conversationTitle);
 		if (newTitle) {
 			renameConversation(newTitle);
 		}
@@ -177,14 +180,14 @@
 	}
 
 	async function deleteConv() {
-		const confirmed = confirm('Are you sure you want to delete this conversation?');
+		const confirmed = await confirm('Are you sure you want to delete this conversation?');
 		if (confirmed) {
 			deleteConversation();
 		}
 	}
 
 	async function duplicate() {
-		const confirmed = confirm('Are you sure you want to duplicate this conversation?');
+		const confirmed = await confirm('Are you sure you want to duplicate this conversation?');
 		if (confirmed) {
 			duplicateConversation();
 		}
@@ -239,7 +242,7 @@
 	}
 
 	async function trash(msg) {
-		if (confirm('Are you sure you want to delete this message?')) {
+		if (await confirm('Are you sure you want to delete this message?')) {
 			await deleteMessage(msg);
 		}
 	}

@@ -4,7 +4,7 @@
 	import '@skeletonlabs/skeleton/themes/theme-hamlindigo.css';
 	//import '@fontsource/quicksand';
 
-	import { AppShell, Drawer, Toast } from '@skeletonlabs/skeleton';
+	import { AppShell, Drawer, Toast, Modal } from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';
 
 	import Folder from '$lib/components/Folder.svelte';
@@ -29,6 +29,7 @@
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 </script>
 
+<Modal />
 <AppShell>
 	<svelte:fragment slot="sidebarLeft">
 		<nav
