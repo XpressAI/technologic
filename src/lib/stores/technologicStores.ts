@@ -477,7 +477,42 @@ function renameFolder(target: ResolvedFolder, newName: string) {
 	});
 }
 
+async function dumpDatabase(){
+	const conversations = localforage.createInstance({
+		name: 'technologic',
+		storeName: 'conversations',
+		driver: localforage.INDEXEDDB
+	});
+
+	const dump = {
+		folders: get(rawFolderStore),
+		conversations: {},
+	}
+
+	await conversations.iterate((value, key) => {
+		dump.conversations[key] = value;
+	})
+
+	return dump;
+}
+
+async function loadDatabase(dump){
+	const conversations = localforage.createInstance({
+		name: 'technologic',
+		storeName: 'conversations',
+		driver: localforage.INDEXEDDB
+	});
+
+	await conversations.clear();
+	await rawFolderStore.set(dump.folders);
+	for (const key of Object.keys(dump.conversations)) {
+		await conversations.setItem(key, dump.conversations[key]);
+	}
+}
+
 export {
+	dumpDatabase,
+	loadDatabase,
 	currentConversation,
 	currentMessageThread,
 	allConversations,

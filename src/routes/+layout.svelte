@@ -68,6 +68,9 @@
 								<li>
 									<a href="/settings/backends">Backends</a>
 								</li>
+								<li>
+									<a href="/settings/backup">Backup / Restore</a>
+								</li>
 							</ul>
 						</nav>
 					</div>
