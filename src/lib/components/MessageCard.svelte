@@ -149,7 +149,7 @@
 	>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
 			{#if isSource}
-				<CodeBlock language="markdown" code={msg.content} />
+				<CodeRenderer lang="markdown" text={msg.content} />
 			{:else}
 				<SvelteMarkdown source={msg.content} renderers={{ code: CodeRenderer }} />
 			{/if}
