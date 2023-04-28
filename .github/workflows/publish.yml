@@ -16,6 +16,7 @@ jobs:
 
       - name: Setup Build Env
         run: |
+          . ~/.nvm/nvm.sh
           nvm install 16.20.0
           nvm use 16.20.0
 
