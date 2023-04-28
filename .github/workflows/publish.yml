@@ -11,14 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: 'placeholder'
+
       - name: Adding Known Hosts
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Setup Build Env
         run: |
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
           . ~/.nvm/nvm.sh
-          nvm install 16.20.0
-          nvm use 16.20.0
+          nvm install 18.14.2
+          nvm use 18.14.2
 
       - name: Install dependencies
         run: npm install
