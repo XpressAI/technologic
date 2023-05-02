@@ -3,7 +3,7 @@
 		currentConversation,
 		currentMessageThread,
 		selectMessageThreadThrough
-	} from '../stores/technologicStores';
+	} from '$lib/stores/technologicStores';
 	import SvelteMarkdown from 'svelte-markdown';
 
 	const xBase = 13;
@@ -70,15 +70,18 @@
 	}
 
 	let hoveredMessageId = null;
+
+	$: graphWidth = maxWidth * xOffset + xBase * 2
+	$: graphHeight = maxDepth * yOffset + yBase * 2
 </script>
 
 <div class="container w-full h-full flex p-4 gap-4">
 	<div class="flex flex-col">
 		<h2>Chat Graph</h2>
-		<div class="relative overflow-y-auto flex-grow">
+		<div class="relative overflow-y-auto flex-grow" style={`min-width: ${graphWidth}px; min-height: ${graphHeight}px`}>
 			<svg
-					width={maxWidth * xOffset + xBase * 2}
-					height={maxDepth * yOffset + yBase * 2}
+					width={graphWidth}
+					height={graphHeight}
 					class="flex-shrink-0 inset-0 absolute"
 			>
 				{#each $currentConversation?.graph as link}
