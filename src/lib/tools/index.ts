@@ -88,10 +88,7 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                 })
                 const json = await result.json()
 
-                const results = json.results.map(it => {return {
-                    ...it,
-                    url: `${it.attributes.url}#:~:text=${encodeURIComponent(it.attributes.text.substring(0, 25))}`
-                }})
+                const results = json.results
 
 
                 const output = codeBlock(JSON.stringify(results))
