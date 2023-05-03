@@ -49,7 +49,7 @@ function calculatorTool(): ToolSpec {
     }
 }
 
-function encyclopediaTool(): ToolSpec {
+function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string): ToolSpec {
     const toolName = 'encyclopedia'
     const explanation = 'Provides information about a topic.'
     const methods: MethodSpec[] = [
@@ -71,9 +71,34 @@ function encyclopediaTool(): ToolSpec {
                 }
             ],
             exec: async (toolCall: ToolCall) => {
+                const query = toolCall.arguments[0]
+
+                const data = new FormData();
+                data.append('vector_space_id', vectorSpaceId)
+                data.append('modality', 'TEXT')
+                data.append('top_k', '5')
+                data.append('query', new File([new Blob([query])], '_'))
+
+                const result = await fetch(`${baseURL}/api/v0/space/${vectorSpaceId}/lookup`, {
+                    method: 'POST',
+                    body: data,
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                const json = await result.json()
+
+                const results = json.results.map(it => {return {
+                    ...it,
+                    url: `${it.attributes.url}#:~:text=${encodeURIComponent(it.attributes.text.substring(0, 25))}`
+                }})
+
+
+                const output = codeBlock(JSON.stringify(results))
+
                 return toolOutput(
                     toolName,
-                    eval(toolCall.arguments[0]),
+                    output,
                     undefined,
                     "\n\nAnswer the question using only the relevant entries in the context. Do not make a judgement on the quality of the results. Cite your sources by providing the urls for all used results."
                 )
@@ -157,5 +182,6 @@ export const tools: ToolSpec[] = [
         name: 'no-applicable-tool',
         explanation: 'A tool that signals that you don\'t have a good tool to resolve the query.',
     },
-    calculatorTool()
+    calculatorTool(),
+    encyclopediaTool('http://localhost:8080', '5', '64291804-d1d9-4e40-9f4f-9d145bc30882')
 ]

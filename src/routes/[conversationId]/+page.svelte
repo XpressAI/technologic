@@ -59,6 +59,8 @@
 		}
 		if(match){
 			const selectedTool = match.toolName;
+			console.info("Selected Tool:", selectedTool)
+
 			const tool: ToolSpec = tools.find(tool => tool.name === selectedTool);
 			if(tool){
 				const toolFn = async () => {
@@ -74,6 +76,8 @@
 					for (let match of matches) {
 						try {
 							const toolCall: ToolCall  = JSON.parse(match[1])
+							console.info("Tool Call:", toolCall.method, toolCall.arguments)
+
 							const method = tool.methods?.find(it => it.name === toolCall.method)
 							if(method){
 								return await method.exec(toolCall)
