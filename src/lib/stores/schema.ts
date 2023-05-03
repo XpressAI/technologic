@@ -1,4 +1,5 @@
 import type { Message } from '$lib/backend/types';
+import type {Readable, Writable} from "svelte/store";
 
 export interface BackendConfiguration {
 	name: string;
@@ -81,7 +82,40 @@ export interface ConversationDB {
 	[id: string]: ConversationStub;
 }
 
-interface ConversationStub {
+export interface ConversationStub {
 	id: string;
 	title: string;
+}
+
+export interface FolderStore extends Readable<ResolvedFolder> {
+	raw: Writable<Folder>;
+	moveItemToFolder(item: FolderContent, target: ResolvedFolder): void;
+	renameFolder(target: ResolvedFolder, newName: string): void;
+	addFolder(parent: ResolvedFolder, name: string): void;
+	removeFolder(target: ResolvedFolder): void
+}
+
+export interface ConversationStore extends Readable<Conversation | null> {
+	messageThread: Readable<MessageThread>;
+	history: Readable<Message[]>;
+	setLastMessageId(id: string): void;
+	selectMessageThreadThrough(message: MessageContainer): Promise<void>;
+	rename(title: string): Promise<void>;
+	addMessage(msg: Message, source: MessageSource, parentMessageId?: string): Promise<MessageContainer>
+	replaceMessage(orig: MessageContainer, newMsg: Message, source: MessageSource): Promise<MessageContainer>;
+	deleteMessage(orig: MessageContainer): Promise<void>;
+}
+
+export interface StubDB<R> {
+	[key: string]: R;
+}
+
+export interface ConversationsRepository {
+	initialized: Writable<boolean>;
+	list: Writable<StubDB<ConversationStub>>;
+	get: (conversationId: string) => ConversationStore;
+	create: () => Promise<ConversationStore>;
+	duplicate: (conversationId: string) => Promise<ConversationStore>;
+	delete: (conversationId: string) => Promise<void>;
+	events: EventTarget
 }

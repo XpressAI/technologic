@@ -1,6 +1,7 @@
 export interface Message {
 	role: string;
 	content: string;
+	name?: string;
 }
 
 export interface Backend {
