@@ -103,8 +103,10 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                     "The JSON above is additional context information about the topic that is being discussed. \n"+
                     "Answer the question using only the relevant entries in the context. " +
                     "Do not make a judgement on the quality of the results. " +
-                    "Cite your sources by providing the urls for all used results." +
+                    "You must use only the information provided in the context. If it doesn't answer the question say only 'I do not know.'" +
+                    "You must cite your sources by providing the urls and similarity for every entry you used from the context." +
                     "You must answer in the same language as the original question, but you may use sources in different languages."
+
                 )
             }
         }
