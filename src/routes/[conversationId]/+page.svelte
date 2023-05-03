@@ -29,6 +29,8 @@
 	import type { Message } from '$lib/backend/types';
 
 	import { prompt, confirm } from "$lib/components/dialogs";
+	import {renderToolInstructions, renderToolSelectionInstructions, tools} from "$lib/tools";
+	import type {MethodSpec, ToolCall, ToolSpec} from "$lib/tools/types";
 
 
 	let inputText = '';
@@ -42,89 +44,10 @@
 	$: conversationTitle = $currentConversation?.title || 'New conversation';
 
 	async function chooseTool(message){
-		const tools = {
-				calculator: {
-					explanation: 'Solves complicated calculations with precision.',
-					instructions: `
-# calculator
-## execute <calculation>
-Performs the calculation using javascript syntax and outputs the result.
-
-\`\`\`
-execute <calculation>
-\`\`\`
-
-Example:
-\`\`\`
-execute 1 + 1
-\`\`\`
-Output:
-\`\`\`
-2
-\`\`\``,
-					exec: async (toolSpec) => eval(toolSpec.arguments[0]),
-					outputContext: 'This is the output of the calculation.'
-				},
-				'encyclopedia': {
-					explanation: 'Provides information about a topic.',
-					instructions: `
-# encyclopedia
-## query
-Queries the encyclopedia for a topic. It produces up to 5 results. Its output is in JSON. During output processing, in-line reference the result you are using with a Footnote.
-
-Example:
-\`\`\`
-query Constantine III
-\`\`\`
-
-Output:
-\`\`\`
-[
-{id: 789, similarity: 0.9, attributes: {"text": "Constantine III (Latin: Flavius Claudius Constantinus; died shortly before 18 September 411) was a common Roman soldier who was declared emperor in Roman Britain in 407 and established himself in Gaul. He was recognised as co-emperor of the Roman Empire from 409 until 411.", "title": "Constantine III (Western Roman emperor)", "url": "https://en.wikipedia.org/wiki/Constantine_III_(Western_Roman_emperor)"}}
-]
-\`\`\``,
-					outputContext: 'Answer the question using only the relevant entries in the context. Do not make a judgement on the quality of the results. Cite your sources by providing the urls for all used results.',
-					exec: async (toolSpec) => console.log(toolSpec)
-				},
-				'more-context-tool': {
-					explanation: 'Select this tool when you need clarification. A tool that will make the user provide you with more context in the current conversation.',
-				},
-				'noop': {
-					explanation: 'A tool that signals that there is no need to use a tool.',
-				},
-				'no-applicable-tool': {
-					explanation: 'A tool that signals that you don\'t have a good tool to resolve the query.',
-				}
-		}
-
-
-		const basePrompt = `
-You are "ToolSelector". The following is a list of tools and a description of their utility that are available. You will receive a query from a user. The query is part of a larger conversation that you don't have direct access to. Your responsibility is to select one of the tools to use to resolve the user's query.
-
-You output everything as JSON formatted like the this:
-
-\`\`\`json
-{
-    // Think step by step and provide a reasoning for what you think would be the best tool to use.
-	reason: "",
-	// Your actual tool selection.
-	toolName: ""
-}
-\`\`\`
-
-You output nothing else. Not even any reasoning.
-
----
-
-`
-
-		const toolPrompt = Object.keys(tools).map(key => `# ${key}\n${tools[key].explanation}\n`).join('\n\n')
-		const fullPrompt = basePrompt + toolPrompt;
-
 		const response = await $currentBackend.sendMessage([
 			{
 				role: 'system',
-				content: fullPrompt
+				content: renderToolSelectionInstructions(tools)
 			},
 			message
 		])
@@ -136,32 +59,13 @@ You output nothing else. Not even any reasoning.
 		}
 		if(match){
 			const selectedTool = match.toolName;
-			if(selectedTool in tools){
-				const tool = tools[selectedTool];
+			const tool: ToolSpec = tools.find(tool => tool.name === selectedTool);
+			if(tool){
 				const toolFn = async () => {
-					const toolUsagePrompt = `
-You are an AI assistant called "ToolBot". ToolBot is an intelligent chatbot that is designed to use the tool it is provided. ToolBot understands the given tool descriptions and APIs. First, ToolBot thinks step by step and provide a reasoning for what you think would be the method to use.
-Only then provide your actual answer formatted as JSON like this:
-
-\`\`\`json
-{
-	// Think step by step and provide a reasoning for what you think would be the best method to use.
-	reason: "",
-	// Your selected method
-	method: "",
-	// Your selected method's arguments
-	arguments: ["", ""]
-}
-\`\`\`
-
----
-
-`
-
 					const toolResponse = await $currentBackend.sendMessage([
 						{
 							role: 'system',
-							content: toolUsagePrompt + tool.instructions
+							content: renderToolInstructions(tool)
 						},
 						message
 					])
@@ -169,12 +73,12 @@ Only then provide your actual answer formatted as JSON like this:
 					const matches = toolResponse.content.matchAll(/```(?:json)?((?:\s|.)+?)```/gm);
 					for (let match of matches) {
 						try {
-							const toolSpec = JSON.parse(match[1])
-							const toolOutput = await tool.exec(toolSpec)
-
-							return {
-								role: 'system',
-								content: 'Context: \n'+ toolOutput + '\n\n' + tool.outputContext
+							const toolCall: ToolCall  = JSON.parse(match[1])
+							const method = tool.methods?.find(it => it.name === toolCall.method)
+							if(method){
+								return await method.exec(toolCall)
+							}else{
+								console.warn("Selected method not in list of methods.", toolCall);
 							}
 						}catch (e) {
 							console.warn("Could not parse response from tool.", toolResponse);
