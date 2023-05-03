@@ -23,11 +23,11 @@ function calculatorTool(): ToolSpec {
             explanation: 'Performs the calculation using javascript syntax and outputs the result.',
             examples: [
                 {
-                    input: 'execute 1 + 1',
+                    input: '1 + 1',
                     output: '2'
                 },
                 {
-                    input: 'execute 1 + 1 * 2',
+                    input: '1 + 1 * 2',
                     output: '3'
                 }
             ],
@@ -62,11 +62,11 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
             explanation: 'Queries the encyclopedia for a topic. It produces up to 5 results. Its output is in JSON.',
             examples: [
                 {
-                    input: 'query "Constantine III"',
+                    input: '"Constantine III"',
                     output: '[\n{id: 789, similarity: 0.9, attributes: {"text": "Constantine III (Latin: Flavius Claudius Constantinus; died shortly before 18 September 411) was a common Roman soldier who was declared emperor in Roman Britain in 407 and established himself in Gaul. He was recognised as co-emperor of the Roman Empire from 409 until 411.", "title": "Constantine III (Western Roman emperor)", "url": "https://en.wikipedia.org/wiki/Constantine_III_(Western_Roman_emperor)"}}\n]'
                 },
                 {
-                    input: 'query "Illuminati"',
+                    input: '"Illuminati"',
                     output: `[\n{id: 123, similarity: 0.9, attributes: {"text": "The Illuminati (plural of Latin illuminatus, 'enlightened') is a name given to several groups, both real and fictitious. Historically, the name usually refers to the Bavarian Illuminati, an Enlightenment-era secret society founded on 1 May 1776 in Bavaria, today part of Germany. The society's goals were to oppose superstition, obscurantism, religious influence over public life, and abuses of state power.", "url": "https://en.wikipedia.org/wiki/Illuminati"}}\n]`
                 }
             ],
