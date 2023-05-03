@@ -91,13 +91,20 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                 const results = json.results
 
 
-                const output = codeBlock(JSON.stringify(results))
+                const output = codeBlock(
+                        JSON.stringify(results, (k, v) => v.toFixed ? Number(v.toFixed(3)) : v
+                        ), 'json');
 
                 return toolOutput(
                     toolName,
                     output,
                     undefined,
-                    "\n\nAnswer the question using only the relevant entries in the context. Do not make a judgement on the quality of the results. Cite your sources by providing the urls for all used results."
+                    "\n\n---\n\n" +
+                    "The JSON above is additional context information about the topic that is being discussed. \n"+
+                    "Answer the question using only the relevant entries in the context. " +
+                    "Do not make a judgement on the quality of the results. " +
+                    "Cite your sources by providing the urls for all used results." +
+                    "You must answer in the same language as the original question, but you may use sources in different languages."
                 )
             }
         }
@@ -130,7 +137,7 @@ Only then provide your actual answer formatted as JSON like this:
 	method: "",
 	// Your selected method's arguments
 	arguments: ["", ""]
-}`, 'json') + '\n\n'
+}`, 'json') + '\n\n ToolBot always starts its output with `{\n"reason":"` and ends it with `]\n}`. \n\n'
 
     const instructions = tool.methods?.map((method: MethodSpec) => {
         const header = `## ${method.name} ${method.arguments.map(it => '<'+it.name+'>').join(' ')}\n`
@@ -156,7 +163,7 @@ You output everything as JSON formatted like the this:
 	toolName: ""
 }
 `, 'json') + `
-You output nothing else. Not even any reasoning.
+ToolSelector always starts its output with \`{\n"reason":"\` and ends it with \`"\n}\`. \n\n
 
 ---
 

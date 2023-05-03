@@ -47,9 +47,8 @@
 		const response = await $currentBackend.sendMessage([
 			{
 				role: 'system',
-				content: renderToolSelectionInstructions(tools)
-			},
-			message
+				content: renderToolSelectionInstructions(tools) + "\n\n --- \n\n The User's query is: \n```" + message.content + "```"
+			}
 		])
 		let match = null;
 		try {
@@ -67,26 +66,22 @@
 					const toolResponse = await $currentBackend.sendMessage([
 						{
 							role: 'system',
-							content: renderToolInstructions(tool)
-						},
-						message
+							content: renderToolInstructions(tool)+ "\n\n --- \n\n The User's query is: ```" + message.content + "```"
+						}
 					])
 
-					const matches = toolResponse.content.matchAll(/```(?:json)?((?:\s|.)+?)```/gm);
-					for (let match of matches) {
-						try {
-							const toolCall: ToolCall  = JSON.parse(match[1])
-							console.info("Tool Call:", toolCall.method, toolCall.arguments)
+					try {
+						const toolCall: ToolCall  = JSON.parse(toolResponse.content)
+						console.info("Tool Call:", toolCall.method, toolCall.arguments)
 
-							const method = tool.methods?.find(it => it.name === toolCall.method)
-							if(method){
-								return await method.exec(toolCall)
-							}else{
-								console.warn("Selected method not in list of methods.", toolCall);
-							}
-						}catch (e) {
-							console.warn("Could not parse response from tool.", toolResponse);
+						const method = tool.methods?.find(it => it.name === toolCall.method)
+						if(method){
+							return await method.exec(toolCall)
+						}else{
+							console.warn("Selected method not in list of methods.", toolCall);
 						}
+					}catch (e) {
+						console.warn("Could not parse response from tool.", toolResponse);
 					}
 				}
 				toolFn.toolName = selectedTool;
@@ -95,6 +90,23 @@
 				console.warn("Selected tool not in list of tools.", response);
 			}
 		}
+	}
+
+	function getHistory(){
+		let history;
+		if (forkMessageId !== $currentConversation?.lastMessageId) {
+			const forkMessageIdx = $currentMessageThread.messages.findIndex(
+					(it) => it.self === forkMessageId
+			);
+			history = $currentMessageThread.messages
+					.slice(0, forkMessageIdx + 1)
+					.map((msg) => $currentConversation?.messages[msg.self].message);
+		} else {
+			history = $currentMessageThread.messages.map(
+					(msg) => $currentConversation?.messages[msg.self].message
+			);
+		}
+		return history;
 	}
 
 	async function sendMessageToChat() {
@@ -111,7 +123,15 @@
 			forkMessageId = $currentConversation?.lastMessageId;
 			inputText = '';
 
-			const tool = await chooseTool(message);
+			if(!autoSend) {
+				waiting = false;
+				return;
+			}
+		}
+
+		let history = getHistory();
+		if(history.length > 0 && history[history.length - 1].role === 'user'){
+			const tool = await chooseTool(history[history.length - 1]);
 			if(tool){
 				const toolOutputMessage = await tool();
 				if(toolOutputMessage){
@@ -119,26 +139,7 @@
 				}
 			}
 			forkMessageId = $currentConversation?.lastMessageId;
-
-			if(!autoSend) {
-				waiting = false;
-				return;
-			}
-		}
-
-
-		let history;
-		if (forkMessageId !== $currentConversation?.lastMessageId) {
-			const forkMessageIdx = $currentMessageThread.messages.findIndex(
-				(it) => it.self === forkMessageId
-			);
-			history = $currentMessageThread.messages
-				.slice(0, forkMessageIdx + 1)
-				.map((msg) => $currentConversation?.messages[msg.self].message);
-		} else {
-			history = $currentMessageThread.messages.map(
-				(msg) => $currentConversation?.messages[msg.self].message
-			);
+			history = getHistory();
 		}
 
 		const source = { backend: $currentBackend.name, model: $currentBackend.model };
