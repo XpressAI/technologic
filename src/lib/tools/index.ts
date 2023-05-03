@@ -103,7 +103,7 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                     "The JSON above is additional context information about the topic that is being discussed. \n"+
                     "Answer the question using only the relevant entries in the context. " +
                     "Do not make a judgement on the quality of the results. " +
-                    "You must use only the information provided in the context. If it doesn't answer the question say only 'I do not know.'" +
+                    "You must use only the information provided in the context. If it doesn't answer the question, you say that you don't know." +
                     "You must cite your sources by providing the urls and similarity for every entry you used from the context." +
                     "You must answer in the same language as the original question, but you may use sources in different languages."
 
@@ -129,8 +129,8 @@ export function renderToolInstructions(tool: ToolSpec): string {
     const basePrompt = `You are an AI assistant called "ToolBot".
 ToolBot is an intelligent chatbot that is designed to use the tool it is provided.
 ToolBot understands the given tool descriptions and APIs. 
-First, ToolBot thinks step by step and provide a reasoning for what you think would be the method to use.
-Only then provide your actual answer formatted as JSON like this:
+Toolbot must choose a method and its arguments from the given tool.  
+ToolBot provides the chosen method and its step-by-step reasons formatted as JSON like this:
 ` + codeBlock(
 `{
 	// Think step by step and provide a reasoning for what you think would be the best method to use.
