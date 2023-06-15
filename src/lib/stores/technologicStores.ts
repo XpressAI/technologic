@@ -112,7 +112,7 @@ function createDB<T, R>(database: string, table: string, stubConverter: (item: T
 		},
 		async nextKey(){
 			const keys = (await db.keys()).map(it => parseInt(it, 10))
-			return (Math.max(...keys) + 1).toString();
+			return keys.length == 0 ? "1" : (Math.max(...keys) + 1).toString();
 		},
 		async removeItem(key: string){
 			await ready;
