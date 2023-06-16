@@ -127,18 +127,21 @@
 			content: newContent
 		};
 
-		await currentConversation.addMessage(newMessage, { ...msg.source, edited: true }, parent?.self);
+		await currentConversation.addMessage(newMessage, { ...msg.source, edited: true }, false, parent?.self);
 	}
 
 	async function saveInPlace(msg, newContent, newRole) {
 		await currentConversation.replaceMessage(
 				msg,
 				{
-					...msg.message,
-					role: newRole,
-					content: newContent
-				},
-				{ ...msg.source, edited: true }
+					...msg,
+					message: {
+						...msg.message,
+						role: newRole,
+						content: newContent
+					},
+					source: { ...msg.source, edited: true }
+				}
 		);
 	}
 
@@ -167,7 +170,7 @@
 				content: inputText
 			};
 
-			const convMsg = await currentConversation.addMessage(message, { backend: 'human', model: 'egg' }, forkMessageId);
+			const convMsg = await currentConversation.addMessage(message, { backend: 'human', model: 'egg' }, false, forkMessageId);
 			forkMessageId = convMsg.id;
 			inputText = '';
 			if(!autoSend) {
@@ -259,6 +262,7 @@
 				<MessageCard
 					msg={msg.message}
 					source={`${msg.source.backend}/${msg.source.model}`}
+					isStreaming={msg.isStreaming}
 					selfPosition={msgAlt.messageIds.indexOf(msgAlt.self) + 1}
 					alternativesCount={msgAlt.messageIds.length}
 					forkSelected={msg.id === forkMessageId}
@@ -272,9 +276,6 @@
 					on:trash={(e) => trash(msg)}
 				/>
 			{/each}
-			{#if waiting}
-				<MessageCard placeholder />
-			{/if}
 			<div bind:this={afterMessages} />
 		</main>
 	</div>

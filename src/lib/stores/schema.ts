@@ -101,8 +101,8 @@ export interface ConversationStore extends Readable<Conversation | null> {
 	setLastMessageId(id: string): void;
 	selectMessageThreadThrough(message: MessageContainer): Promise<void>;
 	rename(title: string): Promise<void>;
-	addMessage(msg: Message, source: MessageSource, parentMessageId?: string): Promise<MessageContainer>
-	replaceMessage(orig: MessageContainer, newMsg: Message, source: MessageSource): Promise<MessageContainer>;
+	addMessage(msg: Message, source: MessageSource, isStreaming: boolean, parentMessageId?: string): Promise<MessageContainer>
+	replaceMessage(orig: MessageContainer, newMsg: MessageContainer): Promise<MessageContainer>;
 	deleteMessage(orig: MessageContainer): Promise<void>;
 }
 

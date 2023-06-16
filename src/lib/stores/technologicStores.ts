@@ -212,13 +212,13 @@ function createConversationsRepository(database: string, table: string): Convers
 			..._currentConversation,
 			messageThread,
 			history,
-			async addMessage(msg: Message, source: MessageSource, parentMessageId?: string) {
+			async addMessage(msg: Message, source: MessageSource, isStreaming: boolean, parentMessageId?: string) {
 				const conversation = get(_currentConversation)!;
 
 				const container: MessageContainer = {
 					id: Object.keys(conversation.messages ?? {}).length.toString(),
 					source: source,
-					isStreaming: false,
+					isStreaming: isStreaming,
 					message: msg
 				};
 
@@ -234,13 +234,8 @@ function createConversationsRepository(database: string, table: string): Convers
 				await db.setItem(conversation.id, updatedConversation);
 				return container;
 			},
-			async replaceMessage(orig: MessageContainer, newMsg: Message, source: MessageSource) {
+			async replaceMessage(orig: MessageContainer, newMessage: MessageContainer) {
 				const conversation = get(_currentConversation)!;
-				const newMessage: MessageContainer = {
-					...orig,
-					message: newMsg,
-					source: source
-				};
 				const updatedConversation: Conversation = {
 					...conversation,
 					messages: {

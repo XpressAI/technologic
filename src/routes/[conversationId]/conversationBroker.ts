@@ -24,15 +24,18 @@ export async function generateAnswer(currentConversation: ConversationStore, bac
 
     const source = { backend: backend.name, model: backend.model };
 
-    let responseMessage = await currentConversation.addMessage({role: 'assistant', content: ''}, source, get(currentConversation)!.lastMessageId);
+    let responseMessage = await currentConversation.addMessage({role: 'assistant', content: ''}, source, true, get(currentConversation)!.lastMessageId);
     await backend.sendMessageAndStream(history, async (content, done) => {
             responseMessage = await currentConversation.replaceMessage(
                 responseMessage,
                 {
+                    ...responseMessage,
+                    isStreaming: !done,
+                    message: {
                     ...responseMessage.message,
                     content: responseMessage.message.content + (content ?? '')
+                    }
                 },
-                responseMessage.source!,
             );
 
             if (done && get(currentConversation)?.isUntitled) {
