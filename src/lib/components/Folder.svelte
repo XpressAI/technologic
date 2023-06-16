@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ResolvedFolder } from '../stores/schema';
+	import type { ResolvedFolder } from '$lib/stores/schema';
 	import { page } from '$app/stores';
 	import IconFolder from '@tabler/icons-svelte/dist/svelte/icons/IconFolder.svelte';
 	import IconFolderPlus from '@tabler/icons-svelte/dist/svelte/icons/IconFolderPlus.svelte';
@@ -12,7 +12,7 @@
 	import { flip } from 'svelte/animate';
 
 	import { dndzone, SHADOW_PLACEHOLDER_ITEM_ID } from 'svelte-dnd-action';
-	import Menu from './Menu.svelte';
+	import Menu from '$lib/components/Menu.svelte';
 	import { alert, prompt, confirm } from "$lib/components/dialogs";
 
 	export let folder: ResolvedFolder;

@@ -1,5 +1,5 @@
-import type { BackendConfiguration } from '../stores/schema';
-import type { Backend, Message } from './types';
+import type { BackendConfiguration } from '$lib/stores/schema';
+import type { Backend, Message } from '$lib/backend/types';
 
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
 	const temperature = 0.7;

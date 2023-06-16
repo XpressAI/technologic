@@ -15,9 +15,9 @@ import type {
 	MessageThread,
 	ResolvedFolder, StubDB
 } from './schema';
-import { createItemStore } from './utils';
+import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import { createBackend } from '../backend/OpenAI';
+import { createBackend } from '$lib/backend/OpenAI';
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
