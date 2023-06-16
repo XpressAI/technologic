@@ -5,7 +5,8 @@
 	//import '@fontsource/quicksand';
 
 	import { AppShell, Drawer, Toast, Modal } from '@skeletonlabs/skeleton';
-	import { LightSwitch } from '@skeletonlabs/skeleton';
+	import { LightSwitch, setInitialClassState } from '@skeletonlabs/skeleton';
+	setInitialClassState();
 
 	import Folder from '$lib/components/Folder.svelte';
 	import Menu from '$lib/components/Menu.svelte';
@@ -67,13 +68,13 @@
 				</div>
 				<div class="flex place-content-end p-2">
 					<Menu id="settings">
-						<div slot="button">
+						<div slot="button" class="flex gap-2">
 							<IconSettings />
 						</div>
 						<div class="card">
 							<ul class="list">
-								<li class="flex gap-2">
-									<LightSwitch /> Dark Mode
+								<li class="flex p-2">
+									<LightSwitch /> <div>Dark Mode</div>
 								</li>
 							</ul>
 							<nav class="list-nav">
