@@ -213,9 +213,6 @@ function createConversationsRepository(database: string, table: string): Convers
 			messageThread,
 			history,
 			async addMessage(msg: Message, source: MessageSource, parentMessageId?: string) {
-				// TODO!
-				if(get(_currentConversation) === null) await createConversation();
-
 				const conversation = get(_currentConversation)!;
 
 				const container: MessageContainer = {
@@ -277,8 +274,6 @@ function createConversationsRepository(database: string, table: string): Convers
 				await db.setItem(newConversation.id, newConversation);
 			},
 			async rename(title: string) {
-				if(get(_currentConversation) === null) await createConversation();
-
 				const conversation = get(_currentConversation)!;
 				const newConversation = {
 					...conversation,
@@ -408,7 +403,7 @@ export function createFolderStore(database: string, table: string, conversationL
 							item: sub
 						} as FolderContent;
 					}),
-					...folder.conversations.map((it) => {
+					...folder.conversations.filter(it => $allConversations[it]).map((it) => {
 						return {
 							id: it,
 							type: 'conversation',

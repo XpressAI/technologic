@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import {tick} from 'svelte';
 	import MessageCard from '$lib/components/MessageCard.svelte';
 	import Menu from '$lib/components/Menu.svelte';
 
@@ -15,11 +15,11 @@
 		currentBackend
 	} from '$lib/stores/technologicStores';
 	import {drawerStore, ProgressRadial, SlideToggle} from '@skeletonlabs/skeleton';
-	import type { Message } from '$lib/backend/types';
-
+	import {beforeNavigate, afterNavigate} from '$app/navigation';
 	import { prompt, confirm } from "$lib/components/dialogs";
 	import {page} from "$app/stores";
-	import {generateAnswer} from './conversationBroker';
+	import {generateAnswer, renameConversationWithSummary} from './conversationBroker';
+	import {goto} from "$app/navigation";
 
 	let inputText = '';
 	let afterMessages;
@@ -28,6 +28,24 @@
     let metaDown = false;
 
 	let isRenaming = false;
+
+	beforeNavigate(async () => {
+		if($currentConversation?.graph.length == 0 && $currentConversation?.isUntitled){
+			await conversationStore.delete($currentConversation.id);
+		}
+	});
+
+	afterNavigate(async ({to}) => {
+		if(to.params?.conversationId == "new"){
+			const conversation = await conversationStore.create();
+			const unsubscribe = conversation.subscribe((value) => {
+				if (value) {
+					unsubscribe();
+					goto(`/${value.id}`);
+				}
+			});
+		}
+	});
 
 	$: currentConversation = conversationStore.get($page.params?.conversationId);
 	$: currentMessageThread = currentConversation.messageThread;
@@ -58,23 +76,9 @@
 		}
 	}
 
-
-	async function renameWithSummary() {
-		// TODO
-		const message: Message = {
-			role: 'system',
-			content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
-		};
-
-		const filteredHistory = $msgHistory.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
-
+	async function renameWithSummary(){
 		isRenaming = true;
-		const response = await $currentBackend.sendMessage([...filteredHistory, message]);
-
-		const newTitle = response.content;
-		if (newTitle) {
-			currentConversation.rename(newTitle);
-		}
+		await renameConversationWithSummary(currentConversation, $currentBackend);
 		isRenaming = false;
 	}
 
@@ -82,13 +86,20 @@
 		const confirmed = await confirm('Are you sure you want to delete this conversation?');
 		if (confirmed) {
 			await conversationStore.delete($currentConversation.id);
+			goto('/');
 		}
 	}
 
 	async function duplicate() {
 		const confirmed = await confirm('Are you sure you want to duplicate this conversation?');
 		if (confirmed) {
-			await conversationStore.duplicate($currentConversation.id);
+			const dup = await conversationStore.duplicate($currentConversation.id);
+			const unsubscribe = dup.subscribe((value) => {
+				if (value) {
+					unsubscribe();
+					goto(`/${value.id}`);
+				}
+			});
 		}
 	}
 
@@ -167,11 +178,6 @@
 
 		await currentConversation.setLastMessageId(forkMessageId);
 		await generateAnswer(currentConversation, $currentBackend);
-		// TODO!
-		// Rename conversation if it's the first message
-		if ($currentMessageThread.messages.length === 1) {
-			await renameWithSummary();
-		}
 		waiting = false;
 	}
 
