@@ -1,26 +1,23 @@
-import { writable, get, derived } from 'svelte/store';
-import type { Readable } from 'svelte/store';
+import {writable, get, derived} from 'svelte/store';
+import type { Readable, Writable } from 'svelte/store';
 import localforage from 'localforage';
 import type { Message } from '$lib/backend/types';
-import { page } from '$app/stores';
-import { browser } from '$app/environment';
 import type {
 	BackendConfiguration,
 	Configuration,
 	Conversation,
-	ConversationDB,
+	ConversationsRepository, ConversationStore, ConversationStub,
 	Folder,
-	FolderContent,
+	FolderContent, FolderStore,
 	MessageAlternative,
 	MessageContainer,
 	MessageSource,
 	MessageThread,
-	ResolvedFolder
+	ResolvedFolder, StubDB
 } from './schema';
-import { createItemStore } from './utils';
+import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import { createBackend } from '../backend/OpenAI';
-import {goto} from "$app/navigation";
+import { createBackend } from '$lib/backend/OpenAI';
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
@@ -57,202 +54,302 @@ const currentBackend = derived(configStore, ($configStore) => {
 	return createBackend(backend, $configStore.backend.model);
 });
 
-const initialFolderValue = {
-	name: '/',
-	folders: [],
-	conversations: []
-};
 
-const rawFolderStore = createItemStore<Folder>(
-	'technologic',
-	'folders',
-	'folders',
-	initialFolderValue
-);
+function createDB<T, R>(database: string, table: string, stubConverter: (item: T) => R){
+	const db = localforage.createInstance({
+		name: database,
+		storeName: table,
+		driver: localforage.INDEXEDDB
+	});
 
-export function createConversationStore(database: string, table: string) {
-	const allConversations = writable<ConversationDB>({});
-	const currentConversation = writable<Conversation | null>(null);
-	const currentMessageThread: Readable<MessageThread> = derived(
-		currentConversation,
-		($currentConversation) => {
-			const messages: MessageAlternative[] = [];
-			if ($currentConversation !== null) {
-				const lastMessageId = $currentConversation.lastMessageId;
+	const initialized = writable<boolean>(false);
+	const ready = db.ready().then(() => initialized.set(true));
 
-				if (lastMessageId !== undefined) {
-					let currentMessageId: string | undefined = lastMessageId;
-					while (currentMessageId !== undefined) {
-						const parentMessageId = $currentConversation.graph.find(
-							(it) => it.to === currentMessageId
-						)?.from;
-						const siblingMessageIds = $currentConversation.graph.filter(
-							(it) => it.from === parentMessageId
-						);
-						messages.unshift({
-							self: currentMessageId,
-							messageIds: siblingMessageIds?.map((it) => it.to) ?? []
-						});
-						currentMessageId = parentMessageId;
+	const activeSubscriptions = new Map<string, Writable<T | null>>();
+
+	const stubList = writable<StubDB<R>>({});
+	initialized.subscribe(async (isInitialized) => {
+		if(!isInitialized) return {};
+		const newValue: StubDB<R> = {};
+		await db.iterate((value: T, key) => {
+			newValue[key] = stubConverter(value);
+		});
+		stubList.set(newValue);
+	});
+
+	return {
+		initialized,
+		list: stubList,
+		getItem(key: string): Readable<T | null> {
+			if(activeSubscriptions.has(key)){
+				return activeSubscriptions.get(key)!;
+			}
+
+			const itemStore: Writable<T | null> = writable(null);
+			activeSubscriptions.set(key, itemStore);
+
+			ready.then(() => {
+				db.getItem<T>(key).then((value) => {
+					itemStore.set(value);
+				})
+			});
+
+			return itemStore;
+		},
+		async setItem(key: string, value: T){
+			await ready;
+			await db.setItem(key, value)
+			stubList.update((it) => {
+				return {
+					...it,
+					[key]: stubConverter(value)
+				}
+			});
+
+			if(activeSubscriptions.has(key)){
+				activeSubscriptions.get(key)?.set(value);
+			}
+		},
+		async nextKey(){
+			const keys = (await db.keys()).map(it => parseInt(it, 10))
+			return keys.length == 0 ? "1" : (Math.max(...keys) + 1).toString();
+		},
+		async removeItem(key: string){
+			await ready;
+			await db.removeItem(key);
+			stubList.update((it) => {
+				const newValue = {...it};
+				delete newValue[key];
+				return newValue;
+			});
+
+			if(activeSubscriptions.has(key)){
+				activeSubscriptions.get(key)?.set(null);
+				activeSubscriptions.delete(key);
+			}
+		}
+	}
+}
+
+function createConversationsRepository(database: string, table: string): ConversationsRepository {
+	const eventTarget = new EventTarget();
+	const db = createDB<Conversation, ConversationStub>(database, table,(it) => {
+		return {
+			id: it.id,
+			title: it.title
+		}
+	});
+
+	async function createConversation(){
+		const conversation: Conversation = {
+			id: await db.nextKey(),
+			title: "Untitled",
+			isUntitled: true,
+			messages: {},
+			graph: [],
+			lastMessageId: undefined
+		};
+		await db.setItem(conversation.id, conversation);
+		eventTarget.dispatchEvent(new CustomEvent("create", {detail: conversation.id}));
+		return getConversation(conversation.id);
+	}
+
+	async function duplicateConversation(conversationId: string){
+		const conversation = get(await db.getItem(conversationId))!;
+		const newConversation = {
+			...conversation,
+			id: await db.nextKey(),
+			title: conversation.title + " (copy)",
+		};
+		await db.setItem(newConversation.id, newConversation);
+		eventTarget.dispatchEvent(new CustomEvent("clone", {detail: {orig: conversationId, clone: newConversation.id}}));
+		return getConversation(newConversation.id);
+	}
+
+	async function deleteConversation(conversationId: string) {
+		await db.removeItem(conversationId);
+		eventTarget.dispatchEvent(new CustomEvent("delete", {detail: conversationId}));
+	}
+	function getConversation(conversationId: string): ConversationStore {
+		const _currentConversation = db.getItem(conversationId);
+		const messageThread: Readable<MessageThread> = derived(
+			_currentConversation,
+			($currentConversation) => {
+				const messages: MessageAlternative[] = [];
+				if ($currentConversation !== null) {
+					const lastMessageId = $currentConversation.lastMessageId;
+
+					if (lastMessageId !== undefined) {
+						let currentMessageId: string | undefined = lastMessageId;
+						while (currentMessageId !== undefined) {
+							const parentMessageId = $currentConversation.graph.find(
+								(it) => it.to === currentMessageId
+							)?.from;
+							const siblingMessageIds = $currentConversation.graph.filter(
+								(it) => it.from === parentMessageId
+							);
+							messages.unshift({
+								self: currentMessageId,
+								messageIds: siblingMessageIds?.map((it) => it.to) ?? []
+							});
+							currentMessageId = parentMessageId;
+						}
 					}
 				}
-			}
 
-			return {
-				messages: messages
-			} as MessageThread;
+				return {
+					messages: messages
+				} as MessageThread;
+			}
+		);
+		const history = derived([messageThread, _currentConversation], ([$messageThread, $currentConversation]) =>
+				$messageThread.messages.map(
+					(msg) => $currentConversation?.messages[msg.self].message
+				)
+		);
+
+		return {
+			..._currentConversation,
+			messageThread,
+			history,
+			async addMessage(msg: Message, source: MessageSource, isStreaming: boolean, parentMessageId?: string) {
+				const conversation = get(_currentConversation)!;
+
+				const container: MessageContainer = {
+					id: Object.keys(conversation.messages ?? {}).length.toString(),
+					source: source,
+					isStreaming: isStreaming,
+					message: msg
+				};
+
+				const updatedConversation: Conversation = {
+					...conversation,
+					messages: {
+						...conversation.messages,
+						[container.id]: container
+					},
+					graph: [...conversation.graph, {from: parentMessageId, to: container.id}],
+					lastMessageId: container.id
+				}
+				await db.setItem(conversation.id, updatedConversation);
+				return container;
+			},
+			async replaceMessage(orig: MessageContainer, newMessage: MessageContainer) {
+				const conversation = get(_currentConversation)!;
+				const updatedConversation: Conversation = {
+					...conversation,
+					messages: {
+						...conversation.messages,
+						[orig.id]: newMessage
+					}
+				};
+				await db.setItem(conversation.id, updatedConversation);
+				return newMessage;
+			},
+			async deleteMessage(orig: MessageContainer) {
+				const conversation = get(_currentConversation)!;
+				// Remove orig from graph and replace its parent/child connections s.t. they are connected directly
+				const parentLink = conversation.graph.find((it) => it.to === orig.id);
+				const childLinks = conversation.graph.filter((it) => it.from === orig.id);
+				const newGraph = conversation.graph.filter(
+					(it) => it.from !== orig.id && it.to !== orig.id
+				);
+				const newChildLinks = childLinks.map((it) => ({from: parentLink?.from, to: it.to}));
+				const newConversation = {
+					...conversation,
+					messages: Object.fromEntries(
+						Object.entries(conversation.messages).filter(([key, value]) => key !== orig.id)
+					),
+					graph: [...newGraph, ...newChildLinks],
+					lastMessageId:
+						conversation.lastMessageId === orig.id
+							? parentLink?.from
+							: conversation.lastMessageId
+				};
+				await db.setItem(newConversation.id, newConversation);
+			},
+			async rename(title: string) {
+				const conversation = get(_currentConversation)!;
+				const newConversation = {
+					...conversation,
+					isUntitled: false,
+					title: title
+				};
+				await db.setItem(newConversation.id, newConversation);
+			},
+			async selectMessageThreadThrough(message: MessageContainer) {
+				const conversation = get(_currentConversation)!;
+				if (!message) return;
+
+				let target = conversation.graph.find((it) => it.from === message.id)?.to;
+				if (!target) {
+					target = message.id;
+				} else {
+					while (target != null) {
+						const next = conversation.graph.find((it) => it.from === target)?.to;
+						if (next == null) break;
+						target = next;
+					}
+				}
+
+				const newConversation = {
+					...conversation,
+					lastMessageId: target
+				};
+				await db.setItem(newConversation.id, newConversation);
+			},
+			async setLastMessageId(id: string) {
+				const conversation = get(_currentConversation)!;
+				const newConversation = {
+					...conversation,
+					lastMessageId: id
+				};
+				await db.setItem(newConversation.id, newConversation);
+			}
 		}
+	}
+
+	return {
+		initialized: db.initialized,
+		list: db.list,
+		get: getConversation,
+		create: createConversation,
+		duplicate: duplicateConversation,
+		delete: deleteConversation,
+		events: eventTarget
+	}
+}
+
+export function createFolderStore(database: string, table: string, conversationList: Readable<StubDB<ConversationStub>>, conversationEvents: EventTarget ): FolderStore {
+	const initialFolderValue = {
+		name: '/',
+		folders: [],
+		conversations: []
+	};
+
+	const rawFolderStore = createItemStore<Folder>(
+		database,
+		table,
+		table,
+		initialFolderValue
 	);
 
-	let db: LocalForage;
-	let ready: Promise<void>;
-
-	async function updateAllConversations() {
-		await ready;
-		const newValue: ConversationDB = {};
-		await db.iterate((value: Conversation, key) => {
-			newValue[key] = {
-				id: value.id,
-				title: value.title
-			};
-		});
-		allConversations.set(newValue);
-	}
-	async function addMessage(msg: Message, source: MessageSource, parentMessageId?: string, conversation?: Conversation) {
-		const $currentConversation = conversation || get(currentConversation);
-
-		const container: MessageContainer = {
-			id: Object.keys($currentConversation?.messages ?? {}).length.toString(),
-			source: source,
-			isStreaming: false,
-			message: msg
-		};
-
-		let newConversation: Conversation;
-		if ($currentConversation !== null) {
-			newConversation = {
-				...$currentConversation,
-				messages: {
-					...$currentConversation.messages,
-					[container.id]: container
-				},
-				graph: [...$currentConversation.graph, { from: parentMessageId, to: container.id }],
-				lastMessageId: container.id
-			};
-			await db.setItem(newConversation.id, newConversation);
-		} else {
-			newConversation = {
-				id: (await db.keys()).length.toString(),
-				title: 'New Conversation',
-				isUntitled: true,
-				messages: {
-					[container.id]: container
-				},
-				graph: [{ from: undefined, to: container.id }],
-				lastMessageId: container.id
-			};
-			await db.setItem(newConversation.id, newConversation);
-			await updateAllConversations();
-
-			rawFolderStore.update((folder) => {
-				return {
-					...folder,
-					conversations: [...folder.conversations, newConversation.id]
-				};
-			});
-			goto(`/${newConversation.id}`);
-		}
-		currentConversation.set(newConversation);
-		return container;
+	function findFolder(start: Folder, path: string[]): Folder {
+		return path.reduce(
+			(curDir, searchPath): Folder => {
+				const res = curDir.folders.find((dir) => dir.name === searchPath);
+				return res ?? throwError('Folder not found');
+			},
+			{ folders: [start] } as Folder
+		);
 	}
 
-	async function replaceMessage(orig: MessageContainer, newMsg: Message, msgSource: MessageSource, conversation?: Conversation) {
-		const $currentConversation = conversation || get(currentConversation);
-		if ($currentConversation !== null) {
-			const newMessage = {
-				...orig,
-				message: newMsg,
-				source: msgSource
-			};
-			const newConversation = {
-				...$currentConversation,
-				messages: {
-					...$currentConversation.messages,
-					[orig.id]: newMessage
-				}
-			};
-			await db.setItem(newConversation.id, newConversation);
-			if(get(currentConversation)?.id == newConversation.id){
-				currentConversation.set(newConversation);
-			}
-			return newMessage;
-		}
-		return null;
-	}
-
-	async function deleteMessage(orig: MessageContainer) {
-		const $currentConversation = get(currentConversation);
-		if ($currentConversation !== null) {
-			// Remove orig from graph and replace its parent/child connections s.t. they are connected directly
-			const parentLink = $currentConversation.graph.find((it) => it.to === orig.id);
-			const childLinks = $currentConversation.graph.filter((it) => it.from === orig.id);
-			const newGraph = $currentConversation.graph.filter(
-				(it) => it.from !== orig.id && it.to !== orig.id
-			);
-			const newChildLinks = childLinks.map((it) => ({ from: parentLink?.from, to: it.to }));
-			const newConversation = {
-				...$currentConversation,
-				messages: Object.fromEntries(
-					Object.entries($currentConversation.messages).filter(([key, value]) => key !== orig.id)
-				),
-				graph: [...newGraph, ...newChildLinks],
-				lastMessageId:
-					$currentConversation.lastMessageId === orig.id
-						? parentLink?.from
-						: $currentConversation.lastMessageId
-			};
-			await db.setItem(newConversation.id, newConversation);
-			currentConversation.set(newConversation);
-		}
-	}
-
-	async function renameConversation(title: string, conversation?: Conversation) {
-		const $currentConversation = conversation || get(currentConversation);
-		let newConversation: Conversation;
-		if ($currentConversation !== null) {
-			newConversation = {
-				...$currentConversation,
-				isUntitled: false,
-				title: title
-			};
-			await db.setItem(newConversation.id, newConversation);
-		} else {
-			newConversation = {
-				id: (await db.keys()).length.toString(),
-				title: title,
-				messages: {},
-				graph: [],
-				isUntitled: false,
-				lastMessageId: undefined
-			};
-			await db.setItem(newConversation.id, newConversation);
-			rawFolderStore.update((folder) => {
-				return {
-					...folder,
-					conversations: [...folder.conversations, newConversation.id]
-				};
-			});
-		}
-		await updateAllConversations();
-		currentConversation.set(newConversation);
-	}
-
-	function findConversationFolder(start: Folder, conv: Conversation): Folder | null {
-		if (start.conversations.includes(conv.id)) {
+	function findConversationFolder(start: Folder, conversationId: string): Folder | null {
+		if (start.conversations.includes(conversationId)) {
 			return start;
 		}
 		for (const folder of start.folders) {
-			const result = findConversationFolder(folder, conv);
+			const result = findConversationFolder(folder, conversationId);
 			if (result !== null) {
 				return result;
 			}
@@ -260,222 +357,131 @@ export function createConversationStore(database: string, table: string) {
 		return null;
 	}
 
-	async function deleteConversation() {
-		const $currentConversation = get(currentConversation);
-		if ($currentConversation !== null) {
-			await db.removeItem($currentConversation.id);
-			rawFolderStore.update((root) => {
-				const folder = findConversationFolder(root, $currentConversation);
-				if (folder) {
-					folder.conversations = folder.conversations.filter(
-						(it) => it !== $currentConversation.id
-					);
-				}
-				return root;
-			});
-			await updateAllConversations();
-			currentConversation.set(null);
-		}
-	}
+	conversationEvents.addEventListener("clone", (e: CustomEvent<{ orig: string, clone: string }>) => {
+		const {orig, clone}= e.detail;
+		rawFolderStore.update((root) => {
+			const folder = findConversationFolder(root, orig)!;
+			folder.conversations = [...folder.conversations, clone];
+			return root;
+		});
+	});
+	conversationEvents.addEventListener("create", (e: CustomEvent<string>) => {
+		const id = e.detail;
+		rawFolderStore.update((root) => {
+			root.conversations = [...root.conversations, id];
+			return root;
+		});
+	});
+	conversationEvents.addEventListener("delete", (e: CustomEvent<string>) => {
+		const id = e.detail;
+		rawFolderStore.update((root) => {
+			const folder = findConversationFolder(root, id)!;
+			folder.conversations = folder.conversations.filter((it) => it !== id);
+			return root;
+		});
+	});
 
-	async function duplicateConversation() {
-		const $currentConversation = get(currentConversation);
-		if ($currentConversation !== null) {
-			const newConversation = {
-				...$currentConversation,
-				id: (await db.keys()).length.toString(),
-				title: $currentConversation.title + ' (copy)'
-			};
-			await db.setItem(newConversation.id, newConversation);
-			await updateAllConversations();
-			rawFolderStore.update((root) => {
-				const folder = findConversationFolder(root, $currentConversation);
-				if (folder) {
-					folder.conversations = [...folder.conversations, newConversation.id];
-				}
-				return root;
-			});
-		}
-	}
+	const folderStore = derived(
+		[rawFolderStore, conversationList],
+		([$rawFolderStore, $allConversations]) => {
+			function resolveFolder(folder: Folder, parents: Folder[]): ResolvedFolder {
+				const folderPath = [...parents, folder];
+				const path = folderPath.map((it) => it.name);
+				const id = path.join('/');
+				const contents: FolderContent[] = [
+					...folder.folders.map((it) => {
+						const sub = resolveFolder(it, folderPath);
+						return {
+							id: sub.id,
+							path: path,
+							type: 'folder',
+							item: sub
+						} as FolderContent;
+					}),
+					...folder.conversations.filter(it => $allConversations[it]).map((it) => {
+						return {
+							id: it,
+							type: 'conversation',
+							path,
+							item: $allConversations[it]
+						} as FolderContent;
+					})
+				];
 
-	async function selectMessageThreadThrough(messageId: string) {
-		const $currentConversation = get(currentConversation);
-		if ($currentConversation == null) return;
+				return {
+					id,
+					contents,
+					path,
+					name: folder.name
+				};
+			}
 
-		const message = $currentConversation.messages[messageId];
-		if (!message) return;
-
-		let target = $currentConversation.graph.find((it) => it.from === messageId)?.to;
-		if (!target) {
-			target = messageId;
-		} else {
-			while (target != null) {
-				const next = $currentConversation.graph.find((it) => it.from === target)?.to;
-				if (next == null) break;
-				target = next;
+			if (Object.keys($allConversations).length == 0) {
+				return resolveFolder(initialFolderValue, []);
+			} else {
+				return resolveFolder($rawFolderStore, []);
 			}
 		}
 
-		const newConversation = {
-			...$currentConversation,
-			lastMessageId: target
-		};
-		//await db.setItem(newConversation.id, newConversation);
-		currentConversation.set(newConversation);
-	}
 
-	if (browser) {
-		db = localforage.createInstance({
-			name: database,
-			storeName: table,
-			driver: localforage.INDEXEDDB
-		});
-
-		const ready = db.ready();
-		ready.then(updateAllConversations);
-
-		page.subscribe(async (page) => {
-			const conversationId = page.params?.conversationId;
-			if (conversationId) {
-				await ready;
-
-				const conversation = await db.getItem<Conversation>(conversationId);
-				currentConversation.set(conversation);
-			}
-		});
-	}
+	);
 
 	return {
-		currentConversation,
-		currentMessageThread,
-		allConversations,
-		addMessage,
-		replaceMessage,
-		renameConversation,
-		deleteConversation,
-		duplicateConversation,
-		selectMessageThreadThrough,
-		deleteMessage
-	};
-}
+		...folderStore,
+		raw: rawFolderStore,
+		addFolder(parent: ResolvedFolder, name: string) {
+			rawFolderStore.update((folder) => {
+				console.log(parent);
+				const parentFolder = findFolder(folder, parent.path);
+				parentFolder.folders.push({
+					name: name,
+					folders: [],
+					conversations: []
+				});
+				return folder;
+			});
+		},
+		moveItemToFolder(item: FolderContent, target: ResolvedFolder) {
+			rawFolderStore.update((root) => {
+				const targetFolder = findFolder(root, target.path);
+				const sourceFolder = findFolder(root, item.path);
 
-const {
-	currentConversation,
-	currentMessageThread,
-	allConversations,
-	addMessage,
-	replaceMessage,
-	renameConversation,
-	deleteConversation,
-	duplicateConversation,
-	selectMessageThreadThrough,
-	deleteMessage
-} = createConversationStore('technologic', 'conversations');
+				if (item.type === 'conversation') {
+					sourceFolder.conversations = sourceFolder.conversations.filter((it) => it !== item.id);
+					targetFolder.conversations = [...targetFolder.conversations, item.id];
+				} else {
+					const folder: Folder = findFolder(sourceFolder, [
+						sourceFolder.name,
+						(item.item as ResolvedFolder).name
+					]);
+					sourceFolder.folders = sourceFolder.folders.filter(
+						(it) => it.name !== (item.item as ResolvedFolder).name
+					);
+					targetFolder.folders = [...targetFolder.folders, folder];
+				}
 
-const folderStore = derived(
-	[rawFolderStore, allConversations],
-	([$rawFolderStore, $allConversations]) => {
-		function resolveFolder(folder: Folder, parents: Folder[]): ResolvedFolder {
-			const folderPath = [...parents, folder];
-			const path = folderPath.map((it) => it.name);
-			const id = path.join('/');
-			const contents: FolderContent[] = [
-				...folder.folders.map((it) => {
-					const sub = resolveFolder(it, folderPath);
-					return {
-						id: sub.id,
-						path: path,
-						type: 'folder',
-						item: sub
-					} as FolderContent;
-				}),
-				...folder.conversations.map((it) => {
-					return {
-						id: it,
-						type: 'conversation',
-						path,
-						item: $allConversations[it]
-					} as FolderContent;
-				})
-			];
-
-			return {
-				id,
-				contents,
-				path,
-				name: folder.name
-			};
-		}
-
-		if (Object.keys($allConversations).length == 0) {
-			return resolveFolder(initialFolderValue, []);
-		} else {
-			return resolveFolder($rawFolderStore, []);
+				return root;
+			});
+		},
+		removeFolder(target: ResolvedFolder) {
+			rawFolderStore.update((root) => {
+				const sourceFolder = findFolder(root, target.path.slice(0, -1));
+				sourceFolder.folders = sourceFolder.folders.filter((it) => it.name !== target.name);
+				return root;
+			});
+		},
+		renameFolder(target: ResolvedFolder, newName: string) {
+			rawFolderStore.update((root) => {
+				const sourceFolder = findFolder(root, target.path);
+				sourceFolder.name = newName;
+				return root;
+			});
 		}
 	}
-);
-
-function findFolder(start: Folder, path: string[]): Folder {
-	return path.reduce(
-		(curDir, searchPath): Folder => {
-			const res = curDir.folders.find((dir) => dir.name === searchPath);
-			return res ?? throwError('Folder not found');
-		},
-		{ folders: [start] } as Folder
-	);
 }
 
-function addFolder(parent: ResolvedFolder, name: string) {
-	rawFolderStore.update((folder) => {
-		console.log(parent);
-		const parentFolder = findFolder(folder, parent.path);
-		parentFolder.folders.push({
-			name: name,
-			folders: [],
-			conversations: []
-		});
-		return folder;
-	});
-}
-
-function moveItemToFolder(item: FolderContent, target: ResolvedFolder) {
-	rawFolderStore.update((root) => {
-		const targetFolder = findFolder(root, target.path);
-		const sourceFolder = findFolder(root, item.path);
-
-		if (item.type === 'conversation') {
-			sourceFolder.conversations = sourceFolder.conversations.filter((it) => it !== item.id);
-			targetFolder.conversations = [...targetFolder.conversations, item.id];
-		} else {
-			const folder: Folder = findFolder(sourceFolder, [
-				sourceFolder.name,
-				(item.item as ResolvedFolder).name
-			]);
-			sourceFolder.folders = sourceFolder.folders.filter(
-				(it) => it.name !== (item.item as ResolvedFolder).name
-			);
-			targetFolder.folders = [...targetFolder.folders, folder];
-		}
-
-		return root;
-	});
-}
-
-function removeFolder(target: ResolvedFolder) {
-	rawFolderStore.update((root) => {
-		const sourceFolder = findFolder(root, target.path.slice(0, -1));
-		sourceFolder.folders = sourceFolder.folders.filter((it) => it.name !== target.name);
-		return root;
-	});
-}
-
-function renameFolder(target: ResolvedFolder, newName: string) {
-	rawFolderStore.update((root) => {
-		const sourceFolder = findFolder(root, target.path);
-		sourceFolder.name = newName;
-		return root;
-	});
-}
+const conversationStore = createConversationsRepository('technologic', 'conversations');
+const folderStore = createFolderStore('technologic', 'folders', conversationStore.list, conversationStore.events);
 
 async function dumpDatabase(){
 	const conversations = localforage.createInstance({
@@ -485,7 +491,7 @@ async function dumpDatabase(){
 	});
 
 	const dump = {
-		folders: get(rawFolderStore),
+		folders: get(folderStore.raw),
 		conversations: {},
 	}
 
@@ -504,7 +510,7 @@ async function loadDatabase(dump){
 	});
 
 	await conversations.clear();
-	await rawFolderStore.set(dump.folders);
+	await folderStore.raw.set(dump.folders);
 	for (const key of Object.keys(dump.conversations)) {
 		await conversations.setItem(key, dump.conversations[key]);
 	}
@@ -513,21 +519,8 @@ async function loadDatabase(dump){
 export {
 	dumpDatabase,
 	loadDatabase,
-	currentConversation,
-	currentMessageThread,
-	allConversations,
-	folderStore,
 	configStore,
 	currentBackend,
-	addMessage,
-	replaceMessage,
-	deleteMessage,
-	addFolder,
-	moveItemToFolder,
-	removeFolder,
-	renameFolder,
-	renameConversation,
-	deleteConversation,
-	duplicateConversation,
-	selectMessageThreadThrough
+	conversationStore,
+	folderStore
 };

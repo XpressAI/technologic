@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ResolvedFolder } from '../stores/schema';
+	import type { ResolvedFolder } from '$lib/stores/schema';
 	import { page } from '$app/stores';
 	import IconFolder from '@tabler/icons-svelte/dist/svelte/icons/IconFolder.svelte';
 	import IconFolderPlus from '@tabler/icons-svelte/dist/svelte/icons/IconFolderPlus.svelte';
@@ -7,15 +7,12 @@
 	import IconSubtask from '@tabler/icons-svelte/dist/svelte/icons/IconSubtask.svelte';
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
 	import {
-		addFolder,
-		removeFolder,
-		renameFolder,
-		moveItemToFolder
-	} from '../stores/technologicStores';
+		folderStore
+	} from '$lib/stores/technologicStores';
 	import { flip } from 'svelte/animate';
 
 	import { dndzone, SHADOW_PLACEHOLDER_ITEM_ID } from 'svelte-dnd-action';
-	import Menu from './Menu.svelte';
+	import Menu from '$lib/components/Menu.svelte';
 	import { alert, prompt, confirm } from "$lib/components/dialogs";
 
 	export let folder: ResolvedFolder;
@@ -25,7 +22,7 @@
 	async function create() {
 		const name = await prompt('Folder name');
 		if (name) {
-			addFolder(folder, name);
+			folderStore.addFolder(folder, name);
 		}
 	}
 
@@ -35,7 +32,7 @@
 		} else {
 			const reallyDelete = await confirm('Are you sure you want to delete this folder?');
 			if (reallyDelete) {
-				removeFolder(folder);
+				folderStore.removeFolder(folder);
 			}
 		}
 	}
@@ -43,7 +40,7 @@
 	async function rename() {
 		const name = await prompt('Folder name', folder.name);
 		if (name) {
-			renameFolder(folder, name);
+			folderStore.renameFolder(folder, name);
 		}
 	}
 
@@ -55,18 +52,18 @@
 		if (e.detail.info.trigger === 'droppedIntoZone') {
 			const item = folder.contents.find((it) => it.id == e.detail.info.id);
 			folder.contents = [...e.detail.items];
-			moveItemToFolder(item, folder);
+			folderStore.moveItemToFolder(item, folder);
 		}
 	}
 </script>
 
 <ul>
-	<li class="flex folder">
-		<a on:click={() => (isOpen = !isOpen)} class="!pl-0 btn justify-start flex-grow">
+	<li class="flex folder overflow-hidden hover:overflow-visible">
+		<a on:click={() => (isOpen = !isOpen)} class="!pl-0 btn justify-start flex-grow flex">
 			<span>
 				{#if isOpen}<IconFolder />{:else}<IconFolderPlus />{/if}
 			</span>
-			<span class="!ml-2 flex-grow text-left">{folder.name}</span>
+			<span class="!ml-2 flex-grow flex-shrink text-left">{folder.name}</span>
 			<span>
 				<Menu size={1} id={folder.path.join('-')}>
 					<ul

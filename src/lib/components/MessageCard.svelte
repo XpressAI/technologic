@@ -21,6 +21,10 @@
 	export let placeholder = false;
 	export let forkSelected = false;
 
+	export let isStreaming = false;
+
+	$: content = isStreaming ? msg.content + "<span class='streaming-message' />" : msg.content;
+
 	let messageText;
 	let messageRole;
 
@@ -149,9 +153,9 @@
 	>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
 			{#if isSource}
-				<CodeRenderer lang="markdown" text={msg.content} />
+				<CodeRenderer lang="markdown" text={content} />
 			{:else}
-				<SvelteMarkdown source={msg.content} renderers={{ code: CodeRenderer }} />
+				<SvelteMarkdown source={content} renderers={{ code: CodeRenderer }} />
 			{/if}
 		</p>
 		<hr />

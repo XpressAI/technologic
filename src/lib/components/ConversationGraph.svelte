@@ -1,10 +1,12 @@
 <script lang="ts">
 	import {
-		currentConversation,
-		currentMessageThread,
-		selectMessageThreadThrough
+		conversationStore
 	} from '$lib/stores/technologicStores';
 	import SvelteMarkdown from 'svelte-markdown';
+	import {page} from "$app/stores";
+
+	$: currentConversation = conversationStore.get($page.params?.conversationId)
+	$: messageThread = currentConversation.messageThread;
 
 	const xBase = 13;
 	const yBase = 25;
@@ -66,7 +68,7 @@
 	}
 
 	function inCurrentThread(messageId: string) {
-		return $currentMessageThread.messages.find((it) => it.self === messageId);
+		return $messageThread.messages.find((it) => it.self === messageId);
 	}
 
 	let hoveredMessageId = null;
@@ -105,7 +107,7 @@
 						: 'text-surface-700-200-token'} hover:text-primary-600-300-token"
 							on:mouseover={() => (hoveredMessageId = messageId)}
 							on:mouseout={() => (hoveredMessageId = null)}
-							on:click={() => selectMessageThreadThrough(messageId)}
+							on:click={() => currentConversation.selectMessageThreadThrough(msg)}
 					>
 						<circle cx={position.x} cy={position.y} r="12" fill="currentColor" class="drop-shadow" />
 

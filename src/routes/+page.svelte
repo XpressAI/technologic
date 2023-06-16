@@ -1,6 +1,6 @@
 <script lang="ts">
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
-	import { configStore } from '../lib/stores/technologicStores';
+	import { configStore } from '$lib/stores/technologicStores';
 
 	$: misconfiguredOpenAI = !$configStore.backends
 		.find((it) => it.name === 'OpenAI')
