@@ -58,12 +58,12 @@
 </script>
 
 <ul>
-	<li class="flex folder">
-		<a on:click={() => (isOpen = !isOpen)} class="!pl-0 btn justify-start flex-grow">
+	<li class="flex folder overflow-hidden hover:overflow-visible">
+		<a on:click={() => (isOpen = !isOpen)} class="!pl-0 btn justify-start flex-grow flex">
 			<span>
 				{#if isOpen}<IconFolder />{:else}<IconFolderPlus />{/if}
 			</span>
-			<span class="!ml-2 flex-grow text-left">{folder.name}</span>
+			<span class="!ml-2 flex-grow flex-shrink text-left">{folder.name}</span>
 			<span>
 				<Menu size={1} id={folder.path.join('-')}>
 					<ul
