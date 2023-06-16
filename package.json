@@ -1,6 +1,6 @@
 {
-	"name": "tree-chat-gpt",
-	"version": "0.0.1",
+	"name": "technologic",
+	"version": "0.2.0",
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
@@ -9,7 +9,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
+		"format": "prettier --plugin-search-dir . --write .",
+		"native-dev": "tauri dev",
+		"native-build": "tauri build"
 	},
 	"devDependencies": {
 		"@floating-ui/dom": "^1.2.6",
