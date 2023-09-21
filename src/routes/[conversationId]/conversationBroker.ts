@@ -1,6 +1,8 @@
 import type {ConversationStore} from "$lib/stores/schema";
 import type {Backend, Message} from "$lib/backend/types";
 import {get} from "svelte/store";
+import {renderToolInstructions, renderToolSelectionInstructions, tools} from "$lib/tools";
+import type {ToolCall, ToolSpec} from "$lib/tools/types";
 
 export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
     const message: Message = {
@@ -19,8 +21,73 @@ export async function renameConversationWithSummary(currentConversation: Convers
     }
 }
 
+async function chooseTool(message: Message, backend: Backend){
+    const toolSelectionPrompt = {
+        role: 'system',
+        content: renderToolSelectionInstructions(tools) + "\n\n --- \n\n The User's query is: \n```" + message.content + "```"
+    };
+    console.trace("Tool Selection Prompt", toolSelectionPrompt.content)
+    const response = await backend.sendMessage([
+        toolSelectionPrompt
+    ])
+    let match = null;
+    try {
+        match = JSON.parse(response.content);
+    }catch (e) {
+        console.warn("Could not parse response from tool selector.", response);
+    }
+    if(match){
+        const selectedTool = match.toolName;
+        console.info("Selected Tool:", selectedTool)
+
+        const tool: ToolSpec | undefined = tools.find(tool => tool.name === selectedTool);
+        if(tool){
+            const toolFn = async () => {
+                const toolInstructionPrompt = {
+                    role: 'system',
+                    content: renderToolInstructions(tool)+ "\n\n --- \n\n The User's query is: ```" + message.content + "```"
+                };
+                console.trace("Tool Instruction Prompt", toolInstructionPrompt.content);
+
+                const toolResponse = await backend.sendMessage([
+                    toolInstructionPrompt
+                ])
+
+                try {
+                    const toolCall: ToolCall  = JSON.parse(toolResponse.content)
+                    console.info("Tool Call:", toolCall.method, toolCall.arguments)
+
+                    const method = tool.methods?.find(it => it.name === toolCall.method)
+                    if(method !== undefined && method.exec !== undefined){
+                        return await method.exec(toolCall)
+                    }else{
+                        console.warn("Selected method not in list of methods.", toolCall);
+                    }
+                }catch (e) {
+                    console.warn("Could not parse response from tool.", toolResponse);
+                }
+            }
+            toolFn.toolName = selectedTool;
+            return toolFn;
+        }else{
+            console.warn("Selected tool not in list of tools.", response);
+        }
+    }
+}
+
 export async function generateAnswer(currentConversation: ConversationStore, backend: Backend){
-    const history = get(currentConversation.history);
+     let history = get(currentConversation.history);
+
+     if(history.length > 0 && history[history.length - 1].role === 'user'){
+        const tool = await chooseTool(history[history.length - 1], backend);
+        if(tool){
+            const toolOutputMessage = await tool();
+            if(toolOutputMessage){
+                await currentConversation.addMessage(toolOutputMessage, { backend: tool.toolName, model: 'tool' }, false, get(currentConversation)!.lastMessageId);
+            }
+        }
+        history = get(currentConversation.history);
+    }
 
     const source = { backend: backend.name, model: backend.model };
 
@@ -35,7 +102,7 @@ export async function generateAnswer(currentConversation: ConversationStore, bac
                     ...responseMessage.message,
                     content: responseMessage.message.content + (content ?? '')
                     }
-                },
+                }
             );
 
             if (done && get(currentConversation)?.isUntitled) {
