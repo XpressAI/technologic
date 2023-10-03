@@ -95,7 +95,7 @@
 						<div class="w-36">
 							<img
 									loading="lazy"
-									src="https://www.xpress.ai/web/image/629-27b48fed/xpress-ai-logo_White_1200px.png"
+									src="%sveltekit.assets%/xpress-ai-logo_White_1200px.png"
 							/>
 						</div>
 					</a>
