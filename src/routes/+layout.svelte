@@ -13,6 +13,8 @@
 
 	import { folderStore } from '$lib/stores/technologicStores';
 
+  import logo from '$lib/assets/xpress-ai-logo-white.png';
+
 	import IconMessageChatbot from '@tabler/icons-svelte/dist/svelte/icons/IconMessageChatbot.svelte';
 	import IconSettings from '@tabler/icons-svelte/dist/svelte/icons/IconSettings.svelte';
 	import IconChevronLeft from '@tabler/icons-svelte/dist/svelte/icons/IconChevronLeft.svelte';
@@ -93,10 +95,7 @@
 				<div>
 					<a href="https://www.xpress.ai" class="card flex variant-ghost gap-2 place-content-center">
 						<div class="w-36">
-							<img
-									loading="lazy"
-									src="https://www.xpress.ai/web/image/629-27b48fed/xpress-ai-logo_White_1200px.png"
-							/>
+							<img alt="Xpress AI logo"	src={logo} />
 						</div>
 					</a>
 				</div>
