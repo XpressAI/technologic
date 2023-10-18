@@ -12,7 +12,8 @@ export interface ArgumentSpec {
 
 export interface ToolCall {
     method: string,
-    arguments: string[]
+    arguments: string[],
+    reason: string
 }
 
 export interface MethodSpec {

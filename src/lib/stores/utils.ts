@@ -28,13 +28,13 @@ export function createItemStore<Type>(
 
 		return {
 			subscribe: store.subscribe,
-			set: async (value: Type) => {
+			async set(value: Type) {
 				await ready;
 
 				await db.setItem(itemKey, value);
 				store.set(value);
 			},
-			update: async (updater: (currentValue: Type) => Type) => {
+			async update(updater: (currentValue: Type) => Type){
 				await ready;
 
 				const currentValue = get(store);

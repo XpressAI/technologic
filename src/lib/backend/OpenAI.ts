@@ -4,7 +4,7 @@ import type { Backend, Message } from '$lib/backend/types';
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
 	const temperature = 0.7;
 
-	function request(payload: any) {
+	function request(payload: unknown) {
 		return fetch(`${configuration.url}/chat/completions`, {
 			method: 'POST',
 			body: JSON.stringify(payload),
@@ -19,7 +19,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		const payload = {
 			model: model,
 			temperature: temperature,
-			messages: history
+			messages: history,
 		};
 
 		const response = await request(payload);
@@ -91,6 +91,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 			return temperature;
 		},
 
+		request,
 		sendMessage,
 		sendMessageAndStream
 	};

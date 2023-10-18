@@ -9,6 +9,7 @@ export interface Backend {
 	readonly model: string;
 	readonly temperature: number;
 
+	request(payload: unknown): Promise<Response>,
 	sendMessage(history: Message[]): Promise<Message>;
 	sendMessageAndStream(
 		history: Message[],

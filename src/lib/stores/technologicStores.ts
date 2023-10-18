@@ -18,6 +18,7 @@ import type {
 import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
 import { createBackend } from '$lib/backend/OpenAI';
+import {tools} from "$lib/tools";
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
@@ -45,6 +46,19 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 		model: defaultBackends()[0].defaultModel
 	}
 });
+
+const toolStore = (function() {
+	const itemStore = createItemStore<unknown>('technologic', 'tools', 'tools', {
+		tools: tools
+	})
+
+	return {
+		...itemStore,
+		activeTools(){
+			return get(itemStore).tools.filter(tool => tool.enabled);
+		}
+	}
+})()
 
 const currentBackend = derived(configStore, ($configStore) => {
 	const backend = $configStore.backends.find((it) => it.name === $configStore.backend.name);
@@ -519,6 +533,7 @@ async function loadDatabase(dump){
 export {
 	dumpDatabase,
 	loadDatabase,
+	toolStore,
 	configStore,
 	currentBackend,
 	conversationStore,
