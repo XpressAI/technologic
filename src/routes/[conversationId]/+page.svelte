@@ -12,7 +12,8 @@
 
 	import {
 		conversationStore,
-		currentBackend
+		currentBackend,
+		configStore
 	} from '$lib/stores/technologicStores';
 	import {drawerStore, ProgressRadial, SlideToggle} from '@skeletonlabs/skeleton';
 	import {beforeNavigate, afterNavigate} from '$app/navigation';
@@ -20,6 +21,8 @@
 	import {page} from "$app/stores";
 	import {generateAnswer, renameConversationWithSummary} from './conversationBroker';
 	import {goto} from "$app/navigation";
+	import SubMenu from "$lib/components/SubMenu.svelte";
+	import type {BackendConfiguration} from "$lib/stores/schema";
 
 	let inputText = '';
 	let afterMessages;
@@ -197,6 +200,16 @@
 
 		waiting = false;
 	}
+
+	function setBackend(backend: BackendConfiguration, model?: string) {
+		$configStore = {
+			...$configStore,
+			backend: {
+				name: backend.name,
+				model: model ?? backend.defaultModel
+			}
+		};
+	}
 </script>
 
 <svelte:head>
@@ -250,6 +263,32 @@
 					<li><hr /></li>
 					<li class="p-3">
 						<SlideToggle name="slider-label" bind:checked={autoSend} size="sm">Auto Send</SlideToggle>
+					</li>
+					<li><hr /></li>
+					<li>
+						<SubMenu id="backends" name="Backend" position="left">
+							<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
+								{#each $configStore.backends as backend}
+									<li>
+										<SubMenu id="backend-{backend.name}"
+												 name={backend.name}
+												 position="left"
+												 selected={$configStore.backend.name === backend.name}
+										>
+											<ul class="card shadow-xl dark:shadow-slate-700 list-nav !bg-surface-50-900-token">
+												{#each backend.models as model}
+													<li><a on:click={() => setBackend(backend, model)}
+														   class="btn" class:variant-filled={$configStore.backend.name === backend.name && $configStore.backend.model === model}
+													>
+														{model}
+													</a></li>
+												{/each}
+											</ul>
+										</SubMenu>
+									</li>
+								{/each}
+							</ul>
+						</SubMenu>
 					</li>
 				</ul>
 			</Menu>
