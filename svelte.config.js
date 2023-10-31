@@ -20,8 +20,12 @@ const config = {
 		adapter: adapter({
 				fallback: 'index.html'
 			}),
-		prerender: { entries: [] }
-	}
+		prerender: { entries: [] },
+    env: {
+      publicPrefix: ''
+    }
+	},
 };
 
 export default config;
+

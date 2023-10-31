@@ -3,6 +3,17 @@ import type {Backend, Message} from "$lib/backend/types";
 import {get} from "svelte/store";
 import {renderToolInstructions, renderToolSelectionInstructions, tools} from "$lib/tools";
 import type {ToolCall, ToolSpec} from "$lib/tools/types";
+import * as vecto  from '@xpressai/vecto-client';
+import { env } from '$env/dynamic/public';
+
+const vecto_index = new vecto.IndexApi(new vecto.Configuration({
+  accessToken: env["VECTO_API_KEY"]
+}));
+
+const vecto_lookup = new vecto.LookupApi(new vecto.Configuration({
+  accessToken: env["VECTO_API_KEY"]
+}));
+
 
 export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
     const message: Message = {
@@ -79,19 +90,11 @@ async function chooseTool(messages: Message[], backend: Backend){
 export async function generateAnswer(currentConversation: ConversationStore, backend: Backend){
      let history = get(currentConversation.history);
 
-
      if(history.length > 0 && history[history.length - 1].role === 'user'){
-        let tool;
-        do {
-            tool = await chooseTool(history, backend);
-            if(tool){
-                const toolOutputMessage = await tool();
-                if(toolOutputMessage){
-                    await currentConversation.addMessage(toolOutputMessage, { backend: tool.toolName, model: 'tool' }, false, get(currentConversation)!.lastMessageId);
-                }
-            }
-            history = get(currentConversation.history);
-        } while(tool);
+       const recalled_context = await recallContext(history, backend);
+       if (recalled_context) {
+         history = [...history, {role: 'system', content: recalled_context}];
+       }
     }
 
     const source = { backend: backend.name, model: backend.model };
@@ -113,5 +116,61 @@ export async function generateAnswer(currentConversation: ConversationStore, bac
             if (done && get(currentConversation)?.isUntitled) {
                 await renameConversationWithSummary(currentConversation, backend);
             }
+            if (done) {
+              await rememberContext(get(currentConversation.history), backend);
+            }
     });
+
+
+
+}
+
+async function rememberContext(history: Message[], backend: Backend) {
+  // Summarize the last user message and assistant response and save to vecto.
+  const lastUserMessage = history.findLast((msg) => msg.role === 'user');
+  const lastAssistantMessage = history.findLast((msg) => msg.role === 'assistant');
+  const summaryMessage = { role: 'system', content: 'You are a summarizer bot.  Given this list of messages provide a summary of what has been discussed.'};
+
+  if (lastUserMessage && lastAssistantMessage) {
+    const summary = await backend.sendMessage([
+      summaryMessage,
+      lastUserMessage,
+      lastAssistantMessage
+    ]);
+
+    const res = await vecto_index.indexData({
+      vectorSpaceId: 28477,
+      modality: 'TEXT',
+      attributes: [JSON.stringify({summary: summary.content})],
+      input: [new Blob([summary.content])],
+    });
+
+    console.log(res);
+  }
+  return '';
+}
+
+
+async function recallContext(history: Message[], backend: Backend) {
+  // Summarize the last user message and assistant response and save to vecto.
+  const lastUserMessage = history.findLast((msg) => msg.role === 'user');
+  const summaryMessage = { role: 'system', content: 'You are a summarizer bot.  Given this list of messages provide a summary of what is being discussed.'};
+
+  if (lastUserMessage) {
+    const summary = await backend.sendMessage([
+      summaryMessage,
+      lastUserMessage,
+    ]);
+
+    const res = await vecto_lookup.lookup({
+      vectorSpaceId: 28477,
+      modality: 'TEXT',
+      topK: 3,
+      query: new Blob([summary.content]),
+    });
+
+    console.log(res);
+    return 'This is the information you recall from previous conversations with this user: ' + JSON.stringify(res.results);
+  }
+  return '';
 }
