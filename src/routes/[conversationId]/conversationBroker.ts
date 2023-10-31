@@ -21,10 +21,11 @@ export async function renameConversationWithSummary(currentConversation: Convers
     }
 }
 
-async function chooseTool(message: Message, backend: Backend){
+async function chooseTool(messages: Message[], backend: Backend){
+
     const toolSelectionPrompt = {
         role: 'system',
-        content: renderToolSelectionInstructions(tools) + "\n\n --- \n\n The User's query is: \n```" + message.content + "```"
+        content: renderToolSelectionInstructions(tools) + "\n\n --- \n\n The context is: \n```" + JSON.stringify(messages) + "```"
     };
     console.trace("Tool Selection Prompt", toolSelectionPrompt.content)
     const response = await backend.sendMessage([
@@ -41,11 +42,11 @@ async function chooseTool(message: Message, backend: Backend){
         console.info("Selected Tool:", selectedTool)
 
         const tool: ToolSpec | undefined = tools.find(tool => tool.name === selectedTool);
-        if(tool){
+        if(tool && tool.methods){
             const toolFn = async () => {
                 const toolInstructionPrompt = {
                     role: 'system',
-                    content: renderToolInstructions(tool)+ "\n\n --- \n\n The User's query is: ```" + message.content + "```"
+                    content: renderToolInstructions(tool)+ "\n\n --- \n\n The context is: ```" + JSON.stringify(messages) + "```"
                 };
                 console.trace("Tool Instruction Prompt", toolInstructionPrompt.content);
 
@@ -78,15 +79,19 @@ async function chooseTool(message: Message, backend: Backend){
 export async function generateAnswer(currentConversation: ConversationStore, backend: Backend){
      let history = get(currentConversation.history);
 
+
      if(history.length > 0 && history[history.length - 1].role === 'user'){
-        const tool = await chooseTool(history[history.length - 1], backend);
-        if(tool){
-            const toolOutputMessage = await tool();
-            if(toolOutputMessage){
-                await currentConversation.addMessage(toolOutputMessage, { backend: tool.toolName, model: 'tool' }, false, get(currentConversation)!.lastMessageId);
+        let tool;
+        do {
+            tool = await chooseTool(history, backend);
+            if(tool){
+                const toolOutputMessage = await tool();
+                if(toolOutputMessage){
+                    await currentConversation.addMessage(toolOutputMessage, { backend: tool.toolName, model: 'tool' }, false, get(currentConversation)!.lastMessageId);
+                }
             }
-        }
-        history = get(currentConversation.history);
+            history = get(currentConversation.history);
+        } while(tool);
     }
 
     const source = { backend: backend.name, model: backend.model };

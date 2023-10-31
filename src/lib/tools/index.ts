@@ -50,16 +50,16 @@ function calculatorTool(): ToolSpec {
 }
 
 function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string): ToolSpec {
-    const toolName = 'encyclopedia'
-    const explanation = 'Provides information about a topic.'
+    const toolName = 'memory-database'
+    const explanation = 'Use this tool to keep and retrieve notes about the user and the conversation.'
     const methods: MethodSpec[] = [
         {
-            name: 'query',
+            name: 'recall',
             arguments: [{
                 name: 'topic',
-                doc: 'The topic you want to query for more information.'
+                doc: 'The topic you want to recall from past conversations.'
             }],
-            explanation: 'Queries the encyclopedia for a topic. It produces up to 5 results. Its output is in JSON.',
+            explanation: 'Recalls memories from past conversations. It produces up to 5 results. Its output is in JSON.',
             examples: [
                 {
                     input: '"Constantine III"',
@@ -98,7 +98,7 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                 return toolOutput(
                     toolName,
                     output,
-                    undefined,
+                    "The query was: "+query+"\n\n",
                     "\n\n---\n\n" +
                     "The JSON above is additional context information about the topic that is being discussed. \n"+
                     "Answer the question using only the relevant entries in the context. " +
@@ -108,6 +108,28 @@ function encyclopediaTool(baseURL: string, vectorSpaceId: string, token: string)
                     "You must answer in the same language as the original question, but you may use sources in different languages."
 
                 )
+            }
+        },
+        {
+            name: 'remember',
+            arguments: [{
+                name: 'memo_to_myself',
+                doc: 'The thing you want to remember for later about this conversation'
+            }],
+            explanation: 'Remembers something about this current conversation',
+            examples: [
+                {
+                    input: '"My users name is Eduardo"',
+                    output: 'Note to self: "My users name is Eduardo"'
+                },
+                {
+                    input: '"Eduardo is the CEO of xpress.ai"',
+                    output: 'Note to self: "Eduardo is the CEO of xpress.ai"'
+                }
+            ],
+            exec: async (toolCall: ToolCall) => {
+                console.log('remember', toolCall);
+                return toolOutput("memory", `Note to self: ${toolCall.arguments[0]}`)
             }
         }
     ]
@@ -176,7 +198,8 @@ ToolSelector always starts its output with \`{\n"reason":"\` and ends it with \`
 }
 
 export const tools: ToolSpec[] = [
-    {
+    encyclopediaTool('https://api.vecto.ai', '28325', 'f9b71e54-8535-4f05-b6e7-d4d538784c6f'),
+    /*{
         name: 'more-context-tool',
         explanation: 'Select this tool when you need clarification. A tool that will make the user provide you with more context in the current conversation.',
     },
@@ -187,7 +210,10 @@ export const tools: ToolSpec[] = [
     {
         name: 'no-applicable-tool',
         explanation: 'A tool that signals that you don\'t have a good tool to resolve the query.',
+    },*/
+    {
+        name: 'done',
+        explanation: 'You call this tool when you are done using any other tools.',
     },
-    calculatorTool(),
-    encyclopediaTool('https://api.vecto.ai', '28325', 'f9b71e54-8535-4f05-b6e7-d4d538784c6f')
+    calculatorTool()
 ]
