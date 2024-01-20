@@ -5,7 +5,11 @@ export function createBackend(configuration: BackendConfiguration, model: string
 	const temperature = 0.7;
 
 	function request(payload: any) {
-		return fetch(`${configuration.url}/chat/completions`, {
+		let baseUrl = configuration.url;
+		if(baseUrl.startsWith("http://0.0.0.0")){
+			baseUrl = "";
+		}
+		return fetch(`${baseUrl}/chat/completions`, {
 			method: 'POST',
 			body: JSON.stringify(payload),
 			headers: {
