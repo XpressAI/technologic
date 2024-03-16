@@ -51,12 +51,12 @@ cd technologic
 Install the dependencies:
 
 ```
-npm install
+pnpm install
 ```
 
 Start the development server:
 ```
-npm run dev
+pnpm run dev
 ```
 
 ## Configuration
@@ -70,10 +70,10 @@ sidebar.
 Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
 ```bash
-npm run dev
+pnpm run dev
 
 # or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm run dev -- --open
 ```
 
 ## Usage
