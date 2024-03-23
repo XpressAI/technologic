@@ -5,6 +5,10 @@
 	import { configStore } from '$lib/stores/technologicStores';
 	import type { BackendConfiguration } from '$lib/stores/schema';
 
+	import { t, l, locales } from '$lib/translations';
+	import { getLocaleFromLocalStorageWithDefault, Locale } from '$lib/translations/util';
+	getLocaleFromLocalStorageWithDefault('locale', Locale.en);
+
 	$: currentBackend = $configStore.backends.find(
 		(backend) => backend.name === $configStore.backend.name
 	);
@@ -31,7 +35,7 @@
 </script>
 
 <section class="card p-3 m-3 variant-glass flex flex-col gap-2">
-	<h3>Backends</h3>
+	<h3>{$t('settings.backend.backends')}</h3>
 	<nav class="list-nav">
 		<ul>
 			{#each $configStore.backends as backend}
@@ -56,7 +60,7 @@
 </section>
 
 <section class="card p-3 m-3 variant-glass flex flex-col gap-2">
-	<h3>Use Model:</h3>
+	<h3>{$t('settings.backend.useModel')}:</h3>
 	<nav class="list-nav">
 		<ul>
 			{#each currentBackend.models as model}
