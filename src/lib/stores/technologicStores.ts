@@ -17,7 +17,8 @@ import type {
 } from './schema';
 import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import { createBackend } from '$lib/backend/OpenAI';
+import { createBackend as createOpenAIBackend } from '$lib/backend/OpenAI';
+import { createBackend as createAnthropicBackend } from '$lib/backend/Anthropic';
 
 function defaultBackends(): BackendConfiguration[] {
 	return [
@@ -26,15 +27,17 @@ function defaultBackends(): BackendConfiguration[] {
 			url: 'https://api.openai.com/v1',
 			models: ['gpt-3.5-turbo'],
 			defaultModel: 'gpt-3.5-turbo',
-			token: 'YOUR_TOKEN_HERE'
+			token: 'YOUR_TOKEN_HERE',
+			// backendFactory: createOpenAIBackend,
 		},
-/*		{
-			name: 'xpress.ai',
-			url: 'http://100.82.217.33:5000/v1',
-			models: ['rwkv-raven-14b-eng-more'],
-			defaultModel: 'rwkv-raven-14b-eng-more',
-			token: 'YOUR_TOKEN_HERE'
-		}*/
+		{
+			name: 'Anthropic',
+			url: 'https://api.anthropic.com/v1',
+			models: ['claude-3-opus-20240229'],
+			defaultModel: 'claude-3-opus-20240229',
+			token: 'YOUR_TOKEN_HERE',
+			// backendFactory: createAnthropicBackend, // does not work
+		}
 	];
 }
 
@@ -43,7 +46,11 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 	backend: {
 		name: defaultBackends()[0].name,
 		model: defaultBackends()[0].defaultModel
-	}
+	}/*
+	factories: {
+		'OpenAI': createOpenAIBackend,
+		'Anthropic': createAnthropicBackend,
+	}*/
 });
 
 const currentBackend = derived(configStore, ($configStore) => {
@@ -51,7 +58,8 @@ const currentBackend = derived(configStore, ($configStore) => {
 	if (backend === undefined) {
 		throw new Error('No backend found');
 	}
-	return createBackend(backend, $configStore.backend.model);
+	//const createBackend = $configStore.factories[backend.name];
+	return createAnthropicBackend(backend, $configStore.backend.model);
 });
 
 

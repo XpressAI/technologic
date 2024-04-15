@@ -48,6 +48,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@anthropic-ai/sdk": "0.20.3",
 		"@tabler/icons-svelte": "^2.22.0"
 	}
 }
