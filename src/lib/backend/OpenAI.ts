@@ -92,15 +92,25 @@ export function createBackend(configuration: BackendConfiguration, model: string
 	}
 
 	async function renameConversationWithSummary(currentConversation: ConversationStore) {
+		const summarizeMessage = 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+
 		const systemMessage: Message = {
 			role: 'system',
-			content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+			content: summarizeMessage,
+		};
+
+		// system prompt alone might not be enough, specially not with other OpenAI-API-compatible models...
+		// therefore we just add a "user" message that is the same as the system prompt, to "trigger" the model
+		// to write an "assistant" message to the users request.
+		const userMessage: Message = {
+			role: 'user',
+			content: summarizeMessage,
 		};
 
 		const history = get(currentConversation.history);
 		const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
 
-		const response = await sendMessage([...filteredHistory, systemMessage]);
+		const response = await sendMessage([...filteredHistory, systemMessage, userMessage]);
 
 		const newTitle = response.content;
 		if (newTitle) {

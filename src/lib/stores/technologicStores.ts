@@ -37,6 +37,14 @@ function defaultBackends(): BackendConfiguration[] {
 			models: ['claude-3-opus-20240229'],
 			defaultModel: 'claude-3-opus-20240229',
 			token: 'YOUR_API_KEY_HERE',
+		},
+		{
+			api: 'openchat', // readonly, must exist in BackendFactory#backends
+			name: 'OpenChat',
+			url: 'http://localhost:18888/v1',
+			models: ['openchat_3.5'],
+			defaultModel: 'openchat_3.5',
+			token: 'YOUR_TOKEN_HERE', // if its locally hosted, the token probably does not matter
 		}
 	];
 }

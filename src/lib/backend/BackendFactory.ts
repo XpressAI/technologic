@@ -5,7 +5,8 @@ import { anthropicBackendFactory } from '$lib/backend/Anthropic';
 
 const backends: { [key: string]: BackendFactory } = {
     openai: openAIBackendFactory,
-    anthropic: anthropicBackendFactory
+    anthropic: anthropicBackendFactory,
+    openchat: openAIBackendFactory, // can use the same API as OpenAI
 }
 
 export function createBackend(config: BackendConfiguration, model: string): Backend {
