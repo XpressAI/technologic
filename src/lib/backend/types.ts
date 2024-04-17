@@ -1,3 +1,6 @@
+import type { BackendConfiguration } from "$lib/stores/schema";
+import type { ConversationStore } from "$lib/stores/schema";
+
 export interface Message {
 	role: string;
 	content: string;
@@ -15,4 +18,9 @@ export interface Backend {
 		history: Message[],
 		onMessage: (message: string, done: boolean) => Promise<void>
 	): Promise<void>;
+	renameConversationWithSummary(currentConversation: ConversationStore): Promise<void>;
+}
+
+export interface BackendFactory {
+	createBackend(configuration: BackendConfiguration, model: string): Backend;
 }

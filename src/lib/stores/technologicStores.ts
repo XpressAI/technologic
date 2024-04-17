@@ -1,4 +1,4 @@
-import {writable, get, derived} from 'svelte/store';
+import { writable, get, derived } from 'svelte/store';
 import type { Readable, Writable } from 'svelte/store';
 import localforage from 'localforage';
 import type { Message } from '$lib/backend/types';
@@ -17,13 +17,13 @@ import type {
 } from './schema';
 import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import { createBackend as createOpenAIBackend } from '$lib/backend/OpenAI';
-import { createBackend as createAnthropicBackend } from '$lib/backend/Anthropic';
+import { createBackend } from "$lib/backend/BackendFactory";
 
+// these can be configured in the frontend (except for 'api')
 function defaultBackends(): BackendConfiguration[] {
 	return [
 		{
-			api: 'openai',
+			api: 'openai', // readonly, must exist in BackendFactory#backends
 			name: 'OpenAI',
 			url: 'https://api.openai.com/v1',
 			models: ['gpt-3.5-turbo'],
@@ -31,12 +31,12 @@ function defaultBackends(): BackendConfiguration[] {
 			token: 'YOUR_TOKEN_HERE',
 		},
 		{
-			api: 'anthropic',
+			api: 'anthropic', // readonly, must exist in BackendFactory#backends
 			name: 'Anthropic',
 			url: 'https://api.anthropic.com/v1',
 			models: ['claude-3-opus-20240229'],
 			defaultModel: 'claude-3-opus-20240229',
-			token: 'YOUR_TOKEN_HERE',
+			token: 'YOUR_API_KEY_HERE',
 		}
 	];
 }
@@ -50,18 +50,11 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 });
 
 const currentBackend = derived(configStore, ($configStore) => {
-	const backend = $configStore.backends.find((it) => it.name === $configStore.backend.name);
-	if (backend === undefined) {
-		throw new Error('No backend found');
+	const backendConfig = $configStore.backends.find((it) => it.name === $configStore.backend.name);
+	if (backendConfig === undefined) {
+		throw new Error('No backend config found');
 	}
-	switch (backend.api) {
-		case 'anthropic':
-			return createAnthropicBackend(backend, $configStore.backend.model);
-
-		case 'openai':
-		default:
-			return createOpenAIBackend(backend, $configStore.backend.model);
-	}
+	return createBackend(backendConfig, $configStore.backend.model);
 });
 
 

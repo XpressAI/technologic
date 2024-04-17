@@ -2,11 +2,16 @@ import type { BackendConfiguration } from '$lib/stores/schema';
 import type { Backend, Message } from '$lib/backend/types';
 import type { ConversationStore } from "$lib/stores/schema";
 import {get} from "svelte/store";
+import type { BackendFactory } from "./types";
+
+export const anthropicBackendFactory: BackendFactory = {
+	createBackend
+};
 
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
-	console.log("created Anthropic backend");
-
-	const temperature = 0.7;
+	// according to docs: https://docs.anthropic.com/claude/reference/messages_post
+	// temperature default is 1.0, I set it to 0.9 to make it slightly less random
+	const temperature = 0.9;
 
 	function request(payload: any) {
 
@@ -35,12 +40,9 @@ export function createBackend(configuration: BackendConfiguration, model: string
 			system: history.find((h) => h.role == 'system')?.content
 		};
 
-		console.log('xxx send message payload', payload)
-
 		const response = await request(payload);
 
 		const out = await response.json();
-		console.info('xxx send message json response', out);
 		const content = out.content[0];
 
 		return {
@@ -91,7 +93,6 @@ export function createBackend(configuration: BackendConfiguration, model: string
 				if (json && json.length >= 1) {
 
 					const event = JSON.parse(json[1]);
-					console.info('event', event);
 
 					out = out.slice(eventSeparatorIndex + 2);
 
@@ -115,13 +116,38 @@ export function createBackend(configuration: BackendConfiguration, model: string
 						// ignore
 					}
 				} else {
-					console.warn('no jeson match foound.');
+					console.warn('no json match foound.');
 					await onMessage('', false); // send start message.
 					return;
 				}
 			}
 		}
 	}
+
+	async function renameConversationWithSummary(currentConversation: ConversationStore) {
+		const systemMessage: Message = {
+			role: 'system',
+			content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+		};
+
+		// seems like anthropic just does not return anything with the system prompt, when the assistant was last to write...
+		// therefore we just append the user prompt as well, containing the same system prompt (which works fine enough)
+		const anthropicSystemMessageWorkaround: Message = {
+			role: 'user',
+			content: systemMessage.content
+		}
+
+		const history = get(currentConversation.history);
+		const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
+
+		const response = await sendMessage([...filteredHistory, systemMessage, anthropicSystemMessageWorkaround]);
+
+		const newTitle = response.content;
+		if (newTitle) {
+			await currentConversation.rename(newTitle);
+		}
+	}
+
 
 	return {
 		get api() {
@@ -138,30 +164,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		},
 
 		sendMessage,
-		sendMessageAndStream
+		sendMessageAndStream,
+		renameConversationWithSummary
 	};
-}
-
-export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
-	const systemMessage: Message = {
-		role: 'system',
-		content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
-	};
-
-	// seems like anthropic just does not return anything with the system prompt, when the assistant was last to write...
-	// therefore we just append the user prompt as well, containing the same system prompt (which works fine enough)
-	const anthropicSystemMessageWorkaround: Message = {
-		role: 'user',
-		content: systemMessage.content
-	}
-
-	const history = get(currentConversation.history);
-	const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
-
-	const response = await backend.sendMessage([...filteredHistory, systemMessage, anthropicSystemMessageWorkaround]);
-
-	const newTitle = response.content;
-	if (newTitle) {
-		await currentConversation.rename(newTitle);
-	}
 }

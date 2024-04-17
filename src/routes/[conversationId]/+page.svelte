@@ -19,7 +19,7 @@
 	import {beforeNavigate, afterNavigate} from '$app/navigation';
 	import { prompt, confirm } from "$lib/components/dialogs";
 	import {page} from "$app/stores";
-	import {generateAnswer, renameConversationWithSummary} from './conversationBroker';
+	import {generateAnswer} from './conversationBroker';
 	import {goto} from "$app/navigation";
 	import SubMenu from "$lib/components/SubMenu.svelte";
 	import type {BackendConfiguration} from "$lib/stores/schema";
@@ -81,7 +81,7 @@
 
 	async function renameWithSummary(){
 		isRenaming = true;
-		await renameConversationWithSummary(currentConversation, $currentBackend);
+		await $currentBackend.renameConversationWithSummary(currentConversation);
 		isRenaming = false;
 	}
 

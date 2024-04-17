@@ -1,6 +1,5 @@
 import type { Message } from '$lib/backend/types';
 import type {Readable, Writable} from "svelte/store";
-import type {Backend} from "$lib/backend/types";
 
 export interface BackendConfiguration {
 	api: string;
@@ -9,7 +8,6 @@ export interface BackendConfiguration {
 	token?: string;
 	models: string[];
 	defaultModel: string;
-	// backendFactory: (configuration: BackendConfiguration, model: string) => Backend;
 }
 
 export interface CurrentBackend {

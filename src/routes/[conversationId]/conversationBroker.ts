@@ -1,20 +1,6 @@
 import type {ConversationStore} from "$lib/stores/schema";
 import type {Backend, Message} from "$lib/backend/types";
 import {get} from "svelte/store";
-import { renameConversationWithSummary as conversationSummaryOpenAI } from "../../lib/backend/OpenAI";
-import { renameConversationWithSummary as conversationSummaryAnthropic } from "../../lib/backend/Anthropic";
-
-export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
-    switch (backend.api) {
-        case 'anthropic':
-            return await conversationSummaryAnthropic(currentConversation, backend);
-
-        case 'openai':
-        default:
-            return await conversationSummaryOpenAI(currentConversation, backend);
-
-    }
-}
 
 export async function generateAnswer(currentConversation: ConversationStore, backend: Backend){
     const history = get(currentConversation.history);
@@ -36,7 +22,7 @@ export async function generateAnswer(currentConversation: ConversationStore, bac
             );
 
             if (done && get(currentConversation)?.isUntitled) {
-                await renameConversationWithSummary(currentConversation, backend);
+                await backend.renameConversationWithSummary(currentConversation);
             }
     });
 }
