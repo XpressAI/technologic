@@ -23,20 +23,20 @@ import { createBackend as createAnthropicBackend } from '$lib/backend/Anthropic'
 function defaultBackends(): BackendConfiguration[] {
 	return [
 		{
+			api: 'openai',
 			name: 'OpenAI',
 			url: 'https://api.openai.com/v1',
 			models: ['gpt-3.5-turbo'],
 			defaultModel: 'gpt-3.5-turbo',
 			token: 'YOUR_TOKEN_HERE',
-			// backendFactory: createOpenAIBackend,
 		},
 		{
+			api: 'anthropic',
 			name: 'Anthropic',
 			url: 'https://api.anthropic.com/v1',
 			models: ['claude-3-opus-20240229'],
 			defaultModel: 'claude-3-opus-20240229',
 			token: 'YOUR_TOKEN_HERE',
-			// backendFactory: createAnthropicBackend, // does not work
 		}
 	];
 }
@@ -46,11 +46,7 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 	backend: {
 		name: defaultBackends()[0].name,
 		model: defaultBackends()[0].defaultModel
-	}/*
-	factories: {
-		'OpenAI': createOpenAIBackend,
-		'Anthropic': createAnthropicBackend,
-	}*/
+	}
 });
 
 const currentBackend = derived(configStore, ($configStore) => {
@@ -58,8 +54,14 @@ const currentBackend = derived(configStore, ($configStore) => {
 	if (backend === undefined) {
 		throw new Error('No backend found');
 	}
-	//const createBackend = $configStore.factories[backend.name];
-	return createAnthropicBackend(backend, $configStore.backend.model);
+	switch (backend.api) {
+		case 'anthropic':
+			return createAnthropicBackend(backend, $configStore.backend.model);
+
+		case 'openai':
+		default:
+			return createOpenAIBackend(backend, $configStore.backend.model);
+	}
 });
 
 

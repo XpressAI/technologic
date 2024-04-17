@@ -5,6 +5,7 @@ export interface Message {
 }
 
 export interface Backend {
+	readonly api: string;
 	readonly name: string;
 	readonly model: string;
 	readonly temperature: number;

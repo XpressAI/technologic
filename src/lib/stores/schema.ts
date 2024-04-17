@@ -3,6 +3,7 @@ import type {Readable, Writable} from "svelte/store";
 import type {Backend} from "$lib/backend/types";
 
 export interface BackendConfiguration {
+	api: string;
 	name: string;
 	url: string;
 	token?: string;

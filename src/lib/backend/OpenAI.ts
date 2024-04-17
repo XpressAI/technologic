@@ -1,8 +1,11 @@
 import type { BackendConfiguration } from '$lib/stores/schema';
 import type { Backend, Message } from '$lib/backend/types';
+import type { ConversationStore } from "$lib/stores/schema";
+import {get} from "svelte/store";
 
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
 	const temperature = 0.7;
+	console.log("created OpenAI backend");
 
 	function request(payload: any) {
 		let baseUrl = configuration.url;
@@ -85,6 +88,9 @@ export function createBackend(configuration: BackendConfiguration, model: string
 	}
 
 	return {
+		get api() {
+			return configuration.api;
+		},
 		get name() {
 			return configuration.name;
 		},
@@ -99,3 +105,21 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		sendMessageAndStream
 	};
 }
+
+export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
+	const systemMessage: Message = {
+		role: 'system',
+		content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+	};
+
+	const history = get(currentConversation.history);
+	const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
+
+	const response = await backend.sendMessage([...filteredHistory, systemMessage]);
+
+	const newTitle = response.content;
+	if (newTitle) {
+		await currentConversation.rename(newTitle);
+	}
+}
+

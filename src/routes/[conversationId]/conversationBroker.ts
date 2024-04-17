@@ -1,21 +1,18 @@
 import type {ConversationStore} from "$lib/stores/schema";
 import type {Backend, Message} from "$lib/backend/types";
 import {get} from "svelte/store";
+import { renameConversationWithSummary as conversationSummaryOpenAI } from "../../lib/backend/OpenAI";
+import { renameConversationWithSummary as conversationSummaryAnthropic } from "../../lib/backend/Anthropic";
 
 export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
-    const message: Message = {
-        role: 'system',
-        content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
-    };
+    switch (backend.api) {
+        case 'anthropic':
+            return await conversationSummaryAnthropic(currentConversation, backend);
 
-    const history = get(currentConversation.history);
-    const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
+        case 'openai':
+        default:
+            return await conversationSummaryOpenAI(currentConversation, backend);
 
-    const response = await backend.sendMessage([...filteredHistory, message]);
-
-    const newTitle = response.content;
-    if (newTitle) {
-        await currentConversation.rename(newTitle);
     }
 }
 

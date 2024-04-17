@@ -1,9 +1,10 @@
 import type { BackendConfiguration } from '$lib/stores/schema';
 import type { Backend, Message } from '$lib/backend/types';
+import type { ConversationStore } from "$lib/stores/schema";
+import {get} from "svelte/store";
 
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
-
-	console.info("Init Anthropic backend");
+	console.log("created Anthropic backend");
 
 	const temperature = 0.7;
 
@@ -34,11 +35,18 @@ export function createBackend(configuration: BackendConfiguration, model: string
 			system: history.find((h) => h.role == 'system')?.content
 		};
 
+		console.log('xxx send message payload', payload)
+
 		const response = await request(payload);
 
 		const out = await response.json();
-		console.info('json out', out);
-		return out.content;
+		console.info('xxx send message json response', out);
+		const content = out.content[0];
+
+		return {
+			role: out.role,
+			content: content.text,
+		};
 	}
 
 	async function sendMessageAndStream(
@@ -116,6 +124,9 @@ export function createBackend(configuration: BackendConfiguration, model: string
 	}
 
 	return {
+		get api() {
+			return configuration.api;
+		},
 		get name() {
 			return configuration.name;
 		},
@@ -129,4 +140,28 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		sendMessage,
 		sendMessageAndStream
 	};
+}
+
+export async function renameConversationWithSummary(currentConversation: ConversationStore, backend: Backend) {
+	const systemMessage: Message = {
+		role: 'system',
+		content: 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+	};
+
+	// seems like anthropic just does not return anything with the system prompt, when the assistant was last to write...
+	// therefore we just append the user prompt as well, containing the same system prompt (which works fine enough)
+	const anthropicSystemMessageWorkaround: Message = {
+		role: 'user',
+		content: systemMessage.content
+	}
+
+	const history = get(currentConversation.history);
+	const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
+
+	const response = await backend.sendMessage([...filteredHistory, systemMessage, anthropicSystemMessageWorkaround]);
+
+	const newTitle = response.content;
+	if (newTitle) {
+		await currentConversation.rename(newTitle);
+	}
 }
