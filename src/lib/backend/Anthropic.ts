@@ -4,39 +4,51 @@ import type { ConversationStore } from "$lib/stores/schema";
 import {get} from "svelte/store";
 import type { BackendFactory } from "./types";
 
-export const openAIBackendFactory: BackendFactory = {
+export const anthropicBackendFactory: BackendFactory = {
 	createBackend
 };
 
 export function createBackend(configuration: BackendConfiguration, model: string): Backend {
-	const temperature = 0.7;
+	// according to docs: https://docs.anthropic.com/claude/reference/messages_post
+	// temperature default is 1.0, I set it to 0.9 to make it slightly less random
+	const temperature = 0.9;
 
 	function request(payload: any) {
+
 		let baseUrl = configuration.url;
 		if(baseUrl.startsWith("http://0.0.0.0")){
 			baseUrl = "";
 		}
-		return fetch(`${baseUrl}/chat/completions`, {
+
+		const headers = new Headers();
+		headers.append('Content-Type', 'application/json');
+		headers.append('x-api-key',`${configuration.token}`);
+		headers.append('anthropic-version', '2023-06-01');
+
+		return fetch(`${baseUrl}/messages`, {
 			method: 'POST',
-			body: JSON.stringify(payload),
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${configuration.token}`
-			}
+			headers: headers,
+			body: JSON.stringify(payload)
 		});
 	}
 
 	async function sendMessage(history: Message[]): Promise<Message> {
 		const payload = {
 			model: model,
-			temperature: temperature,
-			messages: history
+			max_tokens: 1024,
+			messages: history.filter((h) => h.role !== 'system'),
+			system: history.find((h) => h.role == 'system')?.content
 		};
 
 		const response = await request(payload);
 
 		const out = await response.json();
-		return out.choices[0].message;
+		const content = out.content[0];
+
+		return {
+			role: out.role,
+			content: content.text,
+		};
 	}
 
 	async function sendMessageAndStream(
@@ -45,8 +57,9 @@ export function createBackend(configuration: BackendConfiguration, model: string
 	) {
 		const payload = {
 			model: model,
+			max_tokens: 1024,
 			temperature: temperature,
-			messages: history,
+			messages: history.filter((h) => h.content.length > 0),
 			stream: true
 		};
 
@@ -64,6 +77,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 			if (done) {
 				break;
 			}
+
 			const chunk = decoder.decode(value, { stream: true });
 			out += chunk;
 
@@ -75,17 +89,36 @@ export function createBackend(configuration: BackendConfiguration, model: string
 					await onMessage('', true); // send end message.
 					return;
 				}
+				const json = data.match(/data: (.*)/);
+				if (json && json.length >= 1) {
 
-				const event = JSON.parse(data.replace(/^data: /, ''));
+					const event = JSON.parse(json[1]);
 
-				out = out.slice(eventSeparatorIndex + 2);
+					out = out.slice(eventSeparatorIndex + 2);
 
-				if (event.choices[0].finish_reason === 'stop') {
-					await onMessage('', true); // send end message.
-				} else if (event.choices[0].role === 'assistant') {
-					await onMessage('', false); // send start message.
+					switch (event.type) {
+						// case 'message_start':
+						case 'content_block_start':
+							await onMessage('', false); // send start message.
+							break;
+
+						// case 'content_block_stop':
+						case 'message_stop':
+							await onMessage('', true); // send end message.
+							return;
+
+						case 'content_block_delta':
+							await onMessage(event.delta.text, false);
+							break;
+
+						case 'message_delta':
+						case 'ping':
+						// ignore
+					}
 				} else {
-					await onMessage(event.choices[0].delta.content, false);
+					console.warn('no json match foound.');
+					await onMessage('', false); // send start message.
+					return;
 				}
 			}
 		}
@@ -96,7 +129,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 
 		const systemMessage: Message = {
 			role: 'system',
-			content: summarizeMessage,
+			content: summarizeMessage
 		};
 
 		// system prompt alone might not be enough, specially not with other OpenAI-API-compatible models...

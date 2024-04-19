@@ -1,4 +1,4 @@
-import {writable, get, derived} from 'svelte/store';
+import { writable, get, derived } from 'svelte/store';
 import type { Readable, Writable } from 'svelte/store';
 import localforage from 'localforage';
 import type { Message } from '$lib/backend/types';
@@ -17,24 +17,35 @@ import type {
 } from './schema';
 import { createItemStore } from '$lib/stores/utils';
 import { throwError } from 'svelte-preprocess/dist/modules/errors';
-import { createBackend } from '$lib/backend/OpenAI';
+import { createBackend } from "$lib/backend/BackendFactory";
 
+// these can be configured in the frontend (except for 'api')
 function defaultBackends(): BackendConfiguration[] {
 	return [
 		{
+			api: 'openai', // readonly, must exist in BackendFactory#backends
 			name: 'OpenAI',
 			url: 'https://api.openai.com/v1',
 			models: ['gpt-3.5-turbo'],
 			defaultModel: 'gpt-3.5-turbo',
-			token: 'YOUR_TOKEN_HERE'
+			token: 'YOUR_TOKEN_HERE',
 		},
-/*		{
-			name: 'xpress.ai',
-			url: 'http://100.82.217.33:5000/v1',
-			models: ['rwkv-raven-14b-eng-more'],
-			defaultModel: 'rwkv-raven-14b-eng-more',
-			token: 'YOUR_TOKEN_HERE'
-		}*/
+		{
+			api: 'anthropic', // readonly, must exist in BackendFactory#backends
+			name: 'Anthropic',
+			url: 'https://api.anthropic.com/v1',
+			models: ['claude-3-opus-20240229'],
+			defaultModel: 'claude-3-opus-20240229',
+			token: 'YOUR_API_KEY_HERE',
+		},
+		{
+			api: 'openchat', // readonly, must exist in BackendFactory#backends
+			name: 'OpenChat',
+			url: 'http://localhost:18888/v1',
+			models: ['openchat_3.5'],
+			defaultModel: 'openchat_3.5',
+			token: 'YOUR_TOKEN_HERE', // if its locally hosted, the token probably does not matter
+		}
 	];
 }
 
@@ -47,11 +58,11 @@ const configStore = createItemStore<Configuration>('technologic', 'config', 'con
 });
 
 const currentBackend = derived(configStore, ($configStore) => {
-	const backend = $configStore.backends.find((it) => it.name === $configStore.backend.name);
-	if (backend === undefined) {
-		throw new Error('No backend found');
+	const backendConfig = $configStore.backends.find((it) => it.name === $configStore.backend.name);
+	if (backendConfig === undefined) {
+		throw new Error('No backend config found');
 	}
-	return createBackend(backend, $configStore.backend.model);
+	return createBackend(backendConfig, $configStore.backend.model);
 });
 
 

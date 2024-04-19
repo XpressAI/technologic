@@ -2,6 +2,7 @@ import type { Message } from '$lib/backend/types';
 import type {Readable, Writable} from "svelte/store";
 
 export interface BackendConfiguration {
+	api: string;
 	name: string;
 	url: string;
 	token?: string;
@@ -17,6 +18,7 @@ export interface CurrentBackend {
 export interface Configuration {
 	backends: BackendConfiguration[];
 	backend: CurrentBackend;
+	//// factories: { [factoryName: string]: (configuration: BackendConfiguration, model: string) => Backend }
 }
 
 export interface Folder {
