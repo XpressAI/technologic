@@ -18,7 +18,6 @@ export interface CurrentBackend {
 export interface Configuration {
 	backends: BackendConfiguration[];
 	backend: CurrentBackend;
-	//// factories: { [factoryName: string]: (configuration: BackendConfiguration, model: string) => Backend }
 }
 
 export interface Folder {
