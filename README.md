@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/github/license/XpressAI/technologic)
 
 Technologic is a powerful, feature-rich AI Chatbot Client that is designed to work seamlessly with OpenAI's API or any
-compatible backend. With a user-friendly interface and the ability to organize, modify, and manage your conversations,
+compatible backend (such as your [Xpress AI](https://www.xpress.ai) agents). With a user-friendly interface and the ability to organize, modify, and manage your conversations,
 Technologic brings you a next-level chatting experience with your AI assistant.
 
 **[Demo: https://technologic.xpress.ai/](https://technologic.xpress.ai/)**
