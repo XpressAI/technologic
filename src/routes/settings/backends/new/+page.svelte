@@ -12,20 +12,19 @@
 	import EditableString from '$lib/components/EditableString.svelte';
 	import { alert, prompt, confirm } from "$lib/components/dialogs";
 
-
-	$: backend = $configStore.backends.find((backend) => backend.name === $page.params.backendName);
-
-	let dto: BackendConfiguration;
-	$: {
-		if (!dto) {
-			dto = { ...backend };
-		}
-	}
+	let dto: BackendConfiguration = {
+			api: "",
+			name: "new backend",
+			url: "",
+			token: "",
+			models: [],
+			defaultModel: ""
+	};
 
 	async function save() {
 		$configStore = {
 			...$configStore,
-			backends: $configStore.backends.map((b) => (b.name === backend.name ? dto : b))
+			backends: [...$configStore.backends, dto]
 		};
 		await goto('/settings/backends');
 		toastStore.trigger({
@@ -54,7 +53,7 @@
 			<IconServer />
 		</span>
 		<span>
-			Backend: {backend.name}
+			New Backend
 		</span>
 	</h3>
 	<div class="flex flex-col gap-2 p-5">

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import IconServer from '@tabler/icons-svelte/dist/svelte/icons/IconServer.svelte';
 	import IconEdit from '@tabler/icons-svelte/dist/svelte/icons/IconEdit.svelte';
+	import IconCirclePlus from '@tabler/icons-svelte/dist/svelte/icons/IconCirclePlus.svelte';
+
 
 	import { configStore } from '$lib/stores/technologicStores';
 	import type { BackendConfiguration } from '$lib/stores/schema';
@@ -55,6 +57,14 @@
 					</a>
 				</li>
 			{/each}
+			<li>
+				<a class="btn variant-soft-surface" href="/settings/backends/new">
+						<span>
+							<IconCirclePlus size="16" />
+						</span>
+					<span> Add Backend </span>
+				</a>
+			</li>
 		</ul>
 	</nav>
 </section>
