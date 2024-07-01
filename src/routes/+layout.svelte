@@ -20,7 +20,6 @@
 	import IconChevronLeft from '@tabler/icons-svelte/dist/svelte/icons/IconChevronLeft.svelte';
 	import IconChevronRight from '@tabler/icons-svelte/dist/svelte/icons/IconChevronRight.svelte';
 
-
 	import '../app.postcss';
 
 	import hljs from 'highlight.js/lib/core';
@@ -37,6 +36,16 @@
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
 	let hideSidebar = false;
+
+  // i18n support
+  import { t, locales, locale } from "$lib/translations";
+	import { getLocaleFromLocalStorageWithDefault, Locale } from '$lib/translations/util';
+	getLocaleFromLocalStorageWithDefault('locale', Locale.en);
+
+  function setLocalStorageLocale(event: any) {
+    const locale = event.target.value;
+    localStorage.setItem('locale', JSON.stringify(locale));
+  }
 </script>
 
 <Modal />
@@ -63,7 +72,7 @@
 				</a>
 				<div class="flex-grow mt-2">
 					<ul>
-						<li><a href="/new">Start new Conversation</a></li>
+            <li><a href="/new">{$t('main.startNewConversation')}</a></li>
 						<li><hr /></li>
 						<li><Folder folder={$folderStore} /></li>
 					</ul>
@@ -76,17 +85,24 @@
 						<div class="card">
 							<ul class="list">
 								<li class="flex p-2">
-									<LightSwitch /> <div>Dark Mode</div>
+                  <LightSwitch /> <div>{$t('menu.darkMode')}</div>
 								</li>
 							</ul>
 							<nav class="list-nav">
 								<ul class="list-nav card p-2">
 									<li>
-										<a href="/settings/backends">Backends</a>
+                    <a href="/settings/backends">{$t('menu.backends')}</a>
 									</li>
 									<li>
-										<a href="/settings/backup">Backup / Restore</a>
-									</li>
+                    <a href="/settings/backup">{$t('menu.backupRestore')}</a>
+                  </li>
+                  <li>
+                    <select class="ml-4 dark:text-black" on:change={setLocalStorageLocale} bind:value={$locale}>
+                      {#each $locales as value}
+                        <option {value}>{$t(`lang.${value}`)}</option>
+                      {/each}
+                    </select>
+                  </li>
 								</ul>
 							</nav>
 						</div>
