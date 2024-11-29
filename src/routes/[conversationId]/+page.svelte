@@ -23,14 +23,20 @@
 	import {goto} from "$app/navigation";
 	import SubMenu from "$lib/components/SubMenu.svelte";
 	import type {BackendConfiguration} from "$lib/stores/schema";
+  import type { ContentItem, Message } from "$lib/backend/types";
 
 	let inputText = '';
+  let contentItems: Array<{type: 'text' | 'image'; value: string}> = [];
+
 	let afterMessages;
 	let waiting = false;
 	let autoSend = true;
     let metaDown = false;
 
 	let isRenaming = false;
+
+  let dropZone;
+  let dropZoneActive = false;
 
 	beforeNavigate(async () => {
 		if($currentConversation?.graph.length == 0 && $currentConversation?.isUntitled){
@@ -168,19 +174,51 @@
 		waiting = true;
 
 		if (inputText.trim().length > 0) {
-			let message = {
-				role: 'user',
-				content: inputText
-			};
+      addText();
+    }
 
-			const convMsg = await currentConversation.addMessage(message, { backend: 'human', model: 'egg' }, false, forkMessageId);
-			forkMessageId = convMsg.id;
-			inputText = '';
-			if(!autoSend) {
-				waiting = false;
-				return;
-			}
-		}
+    let message: Message;
+
+    if (contentItems.length == 1 && contentItems[0].type == 'text') {
+      message = {
+        role: 'user',
+        content: contentItems[0].value
+      };
+    } else {
+      let contents: Array<ContentItem> = [];
+
+      contentItems.forEach((item) => {
+        if (item.type == 'text') {
+          contents.push({
+            type: 'text',
+            text: item.value
+          });
+        } else if (item.type == 'image') {
+          contents.push({
+            type: 'image_url',
+            image_url: {
+              url: item.value
+            }
+          })
+        }
+      });
+      message = {
+        role: 'user',
+        content: contents
+      };
+    }
+
+
+    const convMsg = await currentConversation.addMessage(message, { backend: 'human', model: 'egg' }, false, forkMessageId);
+    forkMessageId = convMsg.id;
+
+    inputText = '';
+    contentItems = [];
+
+    if(!autoSend) {
+      waiting = false;
+      return;
+    }
 
 		await currentConversation.setLastMessageId(forkMessageId);
 		await generateAnswer(currentConversation, $currentBackend);
@@ -210,6 +248,38 @@
 			}
 		};
 	}
+
+  async function handleDrop(event: DragEvent) {
+    event.preventDefault();
+    dropZoneActive = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64Image = e.target?.result as string;
+          contentItems.push({ type: 'image', value: base64Image })
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  function handleDragOver(event: DragEvent) {
+    event.preventDefault();
+    dropZoneActive = true; // Indicate that drop zone is active
+  }
+
+  function handleDragLeave(event: DragEvent) {
+    dropZoneActive = false; // Reset drop zone active state
+  }
+
+  function addText() {
+    contentItems.push({ type: 'text', value: inputText });
+    inputText = '';
+  }
 </script>
 
 <svelte:head>
@@ -320,36 +390,45 @@
 	</div>
 	<form on:submit|preventDefault={sendMessageToChat}>
 		<label for="chat" class="sr-only">Your message</label>
-		<div class="flex card p-2 gap-2 rounded-none variant-glass items-center">
-			<textarea
-				bind:value={inputText}
-				id="chat"
-				class="textarea p-2 flex-grow"
-				placeholder="Your message..."
-                on:keydown={(e) => {
-                    if (navigator.userAgent.includes('Mac OS X')) {
-                        if (e.code === "MetaLeft" || e.code === "MetaRight") {
-                            metaDown = true;
-                        } else if (e.code === "Enter" && metaDown) {
-                            sendMessageToChat();
-                        }
-                    }
-                }}
-                on:keyup={(e) => {
-                    if (navigator.userAgent.includes('Mac OS X')) {
-                        if (e.code === "MetaLeft" || e.code === "MetaRight") {
-                            metaDown = false;
-                        }
-                    }
-                }}
-				on:keypress={(e) => {
-                    if (!navigator.userAgent.includes('Mac OS X')) {
-						if (e.ctrlKey && e.code === 'Enter') {
-						    sendMessageToChat();
-					    }
-					}
-				}}
-			/>
+		<div class="flex card p-2 gap-2 rounded-none variant-glass items-center" bind:this={dropZone} on:drop={handleDrop} on:dragover={handleDragOver} on:dragleave={handleDragLeave} class:active={dropZoneActive}>
+      <div class="flex-grow flex flex-wrap" id="chat" contenteditable={false}>
+        {#each contentItems as item}
+          {#if item.type === 'text'}
+            <span>{item.value}</span>
+          {:else if item.type === 'image'}
+            <img src={item.value} alt="Image" class="thumbnail" />
+          {/if}
+        {/each}
+        <textarea
+          bind:value={inputText}
+          id="chat"
+          class="textarea p-2 flex-grow"
+          placeholder="Your message..."
+                  on:keydown={(e) => {
+                      if (navigator.userAgent.includes('Mac OS X')) {
+                          if (e.code === "MetaLeft" || e.code === "MetaRight") {
+                              metaDown = true;
+                          } else if (e.code === "Enter" && metaDown) {
+                              sendMessageToChat();
+                          }
+                      }
+                  }}
+                  on:keyup={(e) => {
+                      if (navigator.userAgent.includes('Mac OS X')) {
+                          if (e.code === "MetaLeft" || e.code === "MetaRight") {
+                              metaDown = false;
+                          }
+                      }
+                  }}
+          on:keypress={(e) => {
+                      if (!navigator.userAgent.includes('Mac OS X')) {
+              if (e.ctrlKey && e.code === 'Enter') {
+                  sendMessageToChat();
+                }
+            }
+          }}
+			  />
+      </div>
 			<button type="submit" class="btn-icon variant-filled-primary">
 				<span>
 					<svg
@@ -371,4 +450,20 @@
 </div>
 
 <style>
+    .active {
+        border: 2px dashed #007BFF; /* Highlight drop zone when active */
+    }
+
+    /* Additional styles to improve UI feedback */
+    .active {
+        background-color: rgba(0, 123, 255, 0.1); /* Light blue background when active */
+    }
+
+    .thumbnail {
+        max-width: 50px;
+        max-height: 50px;
+        margin: 2px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
 </style>

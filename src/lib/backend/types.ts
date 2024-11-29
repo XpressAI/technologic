@@ -1,9 +1,23 @@
 import type { BackendConfiguration } from "$lib/stores/schema";
 import type { ConversationStore } from "$lib/stores/schema";
 
+export interface TextContent {
+  type: 'text';
+  text: string;
+}
+
+export interface ImageContent {
+  type: 'image_url';
+  image_url: {
+    url: string; // url or f"data:image/jpeg;base64,{base64_image}"
+  };
+}
+
+export type ContentItem = TextContent | ImageContent;
+
 export interface Message {
 	role: string;
-	content: string;
+	content: string | ContentItem[];
 	name?: string;
 }
 
