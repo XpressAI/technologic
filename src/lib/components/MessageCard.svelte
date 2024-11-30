@@ -279,6 +279,14 @@
 {/if}
 
 <style lang="postcss">
+  .thumbnail {
+    max-width: 100px;
+    max-height: 100px;
+    margin: 2px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
 	.fork-selected {
 		@apply shadow-violet-200 dark:shadow-violet-700 shadow-2xl;
 	}
