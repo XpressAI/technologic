@@ -25,7 +25,7 @@
 
 	//$: content = isStreaming ? msg.content + "<span class='streaming-message' />" : msg.content;
   $: contentItems = isStreaming
-    ? [...msg.content, { type: 'text', value: "<span class='streaming-message' />" }]
+    ? msg.content + "<span class='streaming-message' />"
     : msg.content;
 
 	let messageText;
@@ -155,26 +155,11 @@
 		class:fork-selected={forkSelected}
 	>
 		<p class="mb-3 font-normal text-gray-700 dark:text-gray-100 prose max-w-full">
-      {#if Array.isArray(contentItems)}
-        {#each contentItems as item}
-          {#if item.type === 'text'}
-            {#if isSource}
-              <CodeRenderer lang="markdown" text={item.text} />
-            {:else}
-              <SvelteMarkdown source={item.text} renderers={{ code: CodeRenderer }} />
-            {/if}
-          {:else if item.type === 'image_url'}
-            <img src={item.image_url.url} alt="user image" class="thumbnail" />
-          {/if}
-        {/each}
-      {:else}
-        {#if isSource}
-          <CodeRenderer lang="markdown" text={contentItems} />
-        {:else}
-          !!!
-          <SvelteMarkdown source={contentItems} renderers={{ code: CodeRenderer }} />
-        {/if}
-      {/if}
+			{#if isSource}
+				<CodeRenderer lang="markdown" text={content} />
+			{:else}
+				<SvelteMarkdown source={content} renderers={{ code: CodeRenderer }} />
+			{/if}
 		</p>
 		<hr />
 		<div class="flex items-center justify-between py-2">
@@ -280,13 +265,6 @@
 {/if}
 
 <style lang="postcss">
-  .thumbnail {
-      max-width: 100px;
-      max-height: 100px;
-      margin: 2px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-  }
 	.fork-selected {
 		@apply shadow-violet-200 dark:shadow-violet-700 shadow-2xl;
 	}
