@@ -49,7 +49,7 @@
 					>
 						<span><IconServer /></span>
 						<span class="flex-grow">
-							{backend.name}
+							{(backend)? backend.name : 'Backend Not found'}
 						</span>
 						<span>
 							<a href="/settings/backends/{backend.name}"><IconEdit /></a>
@@ -73,16 +73,18 @@
 	<h3>{$t('settings.backend.useModel')}:</h3>
 	<nav class="list-nav">
 		<ul>
-			{#each currentBackend.models as model}
-				<li>
-					<a
-						on:click={() => setModel(model)}
-						class:bg-surface-active-token={model === $configStore.backend.model}
-					>
-						<span>{model}</span>
-					</a>
-				</li>
-			{/each}
+      {#if currentBackend }
+        {#each currentBackend.models as model}
+          <li>
+            <a
+              on:click={() => setModel(model)}
+              class:bg-surface-active-token={model === $configStore.backend.model}
+            >
+              <span>{model}</span>
+            </a>
+          </li>
+        {/each}
+      {/if}
 		</ul>
 	</nav>
 </section>

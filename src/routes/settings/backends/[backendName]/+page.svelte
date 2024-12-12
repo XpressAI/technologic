@@ -54,7 +54,7 @@
 			<IconServer />
 		</span>
 		<span>
-			Backend: {backend.name}
+			Backend: {(backend) ? backend.name : 'No backend found' }
 		</span>
 	</h3>
 	<div class="flex flex-col gap-2 p-5">
@@ -87,22 +87,26 @@
 			<span>Default Model</span>
 			<select class="select" bind:value={dto.defaultModel}>
 				<option value="" disabled>Select a model</option>
-				{#each dto.models as model}
-					<option value={model}>{model}</option>
-				{/each}
+        {#if dto.models}
+          {#each dto.models as model}
+            <option value={model}>{model}</option>
+          {/each}
+        {/if}
 			</select>
 		</label>
 		<div>
 			<h4>Models</h4>
 			<ul class="list">
-				{#each dto.models as model}
-					<li class="flex">
-						<EditableString bind:value={model} initialEditing={model === ''} />
-						<button class="btn-icon w-8 p-0 variant-soft-error" on:click={() => deleteModel(model)}>
-							<IconTrashX size="16" />
-						</button>
-					</li>
-				{/each}
+        {#if dto.models}
+          {#each dto.models as model}
+            <li class="flex">
+              <EditableString bind:value={model} initialEditing={model === ''} />
+              <button class="btn-icon w-8 p-0 variant-soft-error" on:click={() => deleteModel(model)}>
+                <IconTrashX size="16" />
+              </button>
+            </li>
+          {/each}
+        {/if}
 				<li>
 					<button class="btn variant-soft-surface" on:click={addModel}>
 						<span>
