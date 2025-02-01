@@ -125,8 +125,16 @@ export function createBackend(configuration: BackendConfiguration, model: string
     return div.innerHTML;
   }
 
+  function limitTitle(title: string) {
+    const words = title.split(' ');
+    if (words.length <= 7) {
+      return title;
+    }
+    return words.slice(0, 7).join(' ') + '...';
+  }
+
 	async function renameConversationWithSummary(currentConversation: ConversationStore) {
-		const summarizeMessage = 'Using the same language, in at most 3 words summarize the conversation between assistant and user.'
+		const summarizeMessage = 'Using the same language, in at most 7 words summarize the conversation between assistant and user to serve as a title.  Respond with ONLY the summary, no other commentary or acknowledgements of this instruction.'
 
 		const systemMessage: Message = {
 			role: 'system',
@@ -145,7 +153,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
 
 		const response = await sendMessage([...filteredHistory, systemMessage, userMessage]);
-		const newTitle = escapeHtml(response.content.replace(/[\s\S]*?<think>/g, ''));
+		const newTitle = limitTitle(escapeHtml(response.content.replace(/[\s\S]*?<think>/g, '')));
 		if (newTitle) {
 			await currentConversation.rename(newTitle);
 		}
