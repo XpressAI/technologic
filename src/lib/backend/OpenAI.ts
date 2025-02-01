@@ -153,7 +153,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
 		const filteredHistory = history.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
 
 		const response = await sendMessage([...filteredHistory, systemMessage, userMessage]);
-		const newTitle = limitTitle(escapeHtml(response.content.replace(/[\s\S]*?<think>/g, '')));
+		const newTitle = limitTitle(escapeHtml(response.content.replace(/<think>[\s\S]*?<\/think>/g, '')));
 		if (newTitle) {
 			await currentConversation.rename(newTitle);
 		}
