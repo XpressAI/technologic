@@ -134,7 +134,7 @@ export function createBackend(configuration: BackendConfiguration, model: string
   }
 
 	async function renameConversationWithSummary(currentConversation: ConversationStore) {
-		const summarizeMessage = 'Using the same language, in at most 7 words summarize the conversation between assistant and user to serve as a title.  Respond with ONLY the summary, no other commentary or acknowledgements of this instruction.'
+		const summarizeMessage = 'Using the same language, in at most 7 words summarize the conversation between assistant and user before this message to serve as a title.  Respond with ONLY the summary, no other commentary or acknowledgements of this instruction.'
 
 		const systemMessage: Message = {
 			role: 'system',
